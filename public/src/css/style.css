@@ -1,0 +1,85 @@
+/* 
+!---------- Global Styles ---------- 
+*/
+
+:root {
+	font-size: 16px;
+	font-family: Arial, Helvetica, sans-serif;
+	--text-primary: #ffffff;
+	--text-secondary: #ececec;
+	--bg-primary: #343434;
+	--bg-secondary: #242424;
+	--board-dark: #779954;
+	--board-light: #d7deb0;
+	--transition-speed: 600ms;
+}
+
+body {
+	color: var(--text-secondary);
+	background-color: var(--bg-secondary);
+	margin: 0;
+	padding: 0;
+}
+
+main {
+	height: 100vh;
+	margin-left: 5rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	align-items: center;
+}
+
+/* 
+!---------- Theme Styles ---------- 
+*/
+
+.dark {
+	--text-primary: #ffffff;
+	--text-secondary: #ececec;
+	--bg-primary: #343434;
+	--bg-secondary: #242424;
+	--board-dark: #779954;
+	--board-light: #e9eecc;
+}
+
+.light {
+	--text-primary: #1f1f1f;
+	--text-secondary: #000000;
+	--bg-primary: #ffffff;
+	--bg-secondary: #e4e4e4;
+	--board-dark: #b68863;
+	--board-light: #f0d9b5;
+}
+
+.magic {
+	--text-primary: #ff1ee5;
+	--text-secondary: #000000;
+	--bg-primary: #d8ccbb;
+	--bg-secondary: #f0ece5;
+	--board-dark: #8c705f;
+	--board-light: #b89f8e;
+}
+
+.theme-icon {
+	display: none;
+}
+
+.light #lightIcon,
+.dark #darkIcon,
+.magic #magicIcon {
+	display: block;
+}
+
+/* 
+!---------- Media Queries ---------- 
+*/
+
+/* Small screens */
+@media only screen and (max-width: 790px) {
+	main {
+		flex-direction: column;
+		margin-left: 0;
+		margin-bottom: 5rem;
+	}
+}

@@ -1,0 +1,92 @@
+/* 
+!---------- Chess Board Styles ---------- 
+*/
+
+.square {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.coordinate-text-left {
+	position: absolute;
+}
+
+.coordinate-text-bottom {
+	position: absolute;
+}
+
+.darkSquare {
+	background-color: var(--board-dark);
+	color: var(--board-light);
+}
+
+.lightSquare {
+	background-color: var(--board-light);
+	color: var(--board-dark);
+}
+
+.clickedSquare {
+	background-color: red;
+}
+
+.darkHighlight {
+	background-color: #bbcc49;
+}
+
+.lightHighlight {
+	background-color: #f5f67b;
+}
+
+.square img {
+	width: 100%;
+	height: 100%;
+	position: relative;
+	z-index: -1;
+}
+
+.piece {
+	position: relative;
+	z-index: 1;
+}
+
+/* 
+!---------- Players Turn ---------- 
+*/
+
+.playerTurn {
+	background-color: var(--bg-primary);
+	border-radius: 50px;
+}
+
+/* 
+!---------- Media Queries ---------- 
+*/
+
+/* Small screens */
+@media only screen and (max-width: 790px) {
+	.chessboard {
+		display: grid;
+		grid-template-columns: repeat(8, 12vw);
+		grid-template-rows: repeat(8, 12vw);
+	}
+
+	.playerTurn {
+		width: 50vw;
+		height: 10vw;
+	}
+}
+
+/* Large screens */
+@media only screen and (min-width: 790px) {
+	.chessboard {
+		display: grid;
+		grid-template-columns: repeat(8, 11vh);
+		grid-template-rows: repeat(8, 11vh);
+	}
+
+	.playerTurn {
+		width: 40vh;
+		height: 6vh;
+	}
+}
