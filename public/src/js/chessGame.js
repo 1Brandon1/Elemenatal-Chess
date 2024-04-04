@@ -3,6 +3,10 @@ class Game {
 		// Initialize game variables
 		this.chessboard = new Chessboard()
 		this.gameState = this.chessboard.boardArray120
+
+		this.moveSound = new Audio('/assets/sounds/move.mp3')
+		this.captureSound = new Audio('/assets/sounds/capture.mp3')
+
 		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
 		this.startPosition = this.generateRandomFEN()
 		this.currentTurn = 'white'
@@ -80,6 +84,11 @@ class Game {
 			const piece = this.selectedSquare.querySelector('.piece').id
 			const capturedPiece = this.getCapturedPiece(toCoord)
 			this.chessboard.move(fromCoord, toCoord)
+			if (capturedPiece) {
+				this.captureSound.play()
+			} else {
+				this.moveSound.play()
+			}
 			const move = new Move(piece, fromCoord, toCoord, capturedPiece)
 			this.movesHistory.push(move)
 			this.resetSquareSelection()

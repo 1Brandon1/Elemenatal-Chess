@@ -7,4 +7,4 @@
 
 - redo moves bug when you make a move, undo it, make a different move, then press redo
 
-- add sounds
+- figure out what favicon.ico error is with audio
