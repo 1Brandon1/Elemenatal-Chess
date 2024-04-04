@@ -1,91 +1,94 @@
 function getValidMoves(piece, currentPosition) {
-	// Determine valid moves based on the piece type
-	switch (piece.toLowerCase()) {
+	const colour = piece === piece.toUpperCase() ? 'white' : 'black'
+	const pieceType = piece.toLowerCase()
+
+	switch (pieceType) {
 		case 'p':
-			return getPawnMoves(currentPosition, piece)
+			return getPawnMoves(currentPosition, colour)
 		case 'n':
-			return getKnightMoves(currentPosition)
+			return getKnightOrKingMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
 		case 'b':
-			return getBishopMoves(currentPosition)
+			return getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
 		case 'r':
-			return getRookMoves(currentPosition)
+			return getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10])
 		case 'q':
-			return getQueenMoves(currentPosition)
+			return getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11])
 		case 'k':
-			return getKingMoves(currentPosition)
+			return getKnightOrKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
 		default:
 			return [] // No valid moves for unknown pieces
 	}
 }
 
-//!-------------- Normal Piece Moves --------------
-
-// Valid moves for a pawn
-function getPawnMoves(currentPosition, piece) {
-	const dir = piece === 'P' ? -1 : 1
-	const offsets = [10, 20]
-
+function getKnightOrKingMoves(currentPosition, colour, offsets) {
 	let validMoves = []
-	offsets.forEach((offset) => {
-		const newPosition = currentPosition + offset * dir
-		validMoves.push(newPosition)
-	})
-	return validMoves
-}
-
-// Valid moves for a knight
-function getKnightMoves(currentPosition) {
-	const offsets = [-21, -19, -12, -8, 8, 12, 19, 21]
-	const validMoves = []
-	offsets.forEach((offset) => {
+	for (let offset of offsets) {
 		const newPosition = currentPosition + offset
-		validMoves.push(newPosition)
-	})
+		if (isValidPosition(newPosition) && !isOccupiedByAlly(newPosition, colour)) {
+			validMoves.push(newPosition)
+		}
+	}
 	return validMoves
 }
 
-// Valid moves for a bishop
-function getBishopMoves(currentPosition) {
-	const offsets = [-11, -9, 9, 11]
+function getPawnMoves(currentPosition, colour) {
+	const dir = colour === 'white' ? -1 : 1
+	const startingRank = colour === 'white' ? 8 : 3
+	const offsets = [10 * dir]
 	let validMoves = []
-	offsets.forEach((offset) => {
+
+	if (Math.floor(currentPosition / 10) === startingRank) {
+		offsets.push(20 * dir)
+	}
+
+	for (let offset of offsets) {
 		const newPosition = currentPosition + offset
-		validMoves.push(newPosition)
-	})
+		if (isValidPosition(newPosition) && !isOccupied(newPosition)) {
+			validMoves.push(newPosition)
+		}
+	}
+
+	const captureOffsets = [9 * dir, 11 * dir]
+	for (let offset of captureOffsets) {
+		const newPosition = currentPosition + offset
+		if (isValidPosition(newPosition) && isOccupiedByOpponent(newPosition, colour)) {
+			validMoves.push(newPosition)
+		}
+	}
+
 	return validMoves
 }
 
-// Valid moves for a rook
-function getRookMoves(currentPosition) {
-	const offsets = [-10, -1, 1, 10]
+function getSlidingMoves(currentPosition, colour, offsets) {
 	let validMoves = []
-	offsets.forEach((offset) => {
-		const newPosition = currentPosition + offset
-		validMoves.push(newPosition)
-	})
+	for (let offset of offsets) {
+		let newPosition = currentPosition + offset
+		while (isValidPosition(newPosition) && !isOccupiedByAlly(newPosition, colour)) {
+			validMoves.push(newPosition)
+			if (isOccupiedByOpponent(newPosition, colour)) break
+			newPosition += offset
+		}
+	}
 	return validMoves
 }
 
-// Valid moves for a queen
-function getQueenMoves(currentPosition) {
-	const offsets = [-11, -10, -9, -1, 1, 9, 10, 11]
-	let validMoves = []
-	offsets.forEach((offset) => {
-		const newPosition = currentPosition + offset
-		validMoves.push(newPosition)
-	})
-	return validMoves
+function isValidPosition(squareIndex) {
+	return squareIndex >= 21 && squareIndex <= 98 && squareIndex % 10 !== 0 && (squareIndex + 1) % 10 !== 0
 }
 
-// Valid moves for a king
-function getKingMoves(currentPosition) {
-	const offsets = [-11, -10, -9, -1, 1, 9, 10, 11]
-	const validMoves = []
-	offsets.forEach((offset) => {
-		const newPosition = currentPosition + offset
-		validMoves.push(newPosition)
-	})
-	return validMoves
+function isOccupied(squareIndex) {
+	const piece = game.chessboard.boardArray120[squareIndex]
+	return piece !== ''
 }
 
-//!-------------- Special Piece Moves --------------
+// Check if a square is occupied by an opponent piece
+function isOccupiedByOpponent(squareIndex, colour) {
+	const piece = game.chessboard.boardArray120[squareIndex]
+	return piece !== '' && piece.colour !== colour
+}
+
+// Check if a square is occupied by an ally piece
+function isOccupiedByAlly(squareIndex, colour) {
+	const piece = game.chessboard.boardArray120[squareIndex]
+	return piece !== '' && piece.colour === colour
+}

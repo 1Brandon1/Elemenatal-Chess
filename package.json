@@ -1,7 +1,7 @@
 {
 	"name": "chess",
 	"version": "1.0.0",
-	"description": "",
+	"description": "Chess?, a dynamic and innovative variant of the classic game of chess!",
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js",
