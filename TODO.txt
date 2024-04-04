@@ -1,10 +1,3 @@
-- finish move logic
-- get valid moves needs to take in board array and index
-- use to index to find what piece it is
-
-- change so it finds from board array (ChessGame.js line 238):
-    const piece = this.selectedSquare.querySelector('.piece').id
-
-- redo moves bug when you make a move, undo it, make a different move, then press redo
+- Add check, checkmate and en passant
 
 - figure out what favicon.ico error is with audio

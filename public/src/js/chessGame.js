@@ -7,8 +7,8 @@ class Game {
 		this.moveSound = new Audio('/assets/sounds/move.mp3')
 		this.captureSound = new Audio('/assets/sounds/capture.mp3')
 
-		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		this.startPosition = this.generateRandomFEN()
+		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		// this.startPosition = this.generateRandomFEN()
 		this.currentTurn = 'white'
 		this.gameOver = false
 		this.movesHistory = []
@@ -48,6 +48,7 @@ class Game {
 
 	start() {
 		this.movesHistory = []
+		this.undoneMoves = []
 		this.chessboard.draw(this.startPosition)
 	}
 
@@ -81,7 +82,7 @@ class Game {
 		if (this.isPiecesTurn(this.selectedSquare) && this.isMoveInValidMoves(square)) {
 			const fromCoord = this.selectedSquare.getAttribute('coordinate')
 			const toCoord = square.getAttribute('coordinate')
-			const piece = this.selectedSquare.querySelector('.piece').id
+			const piece = this.chessboard.getSquarePieceObj(fromCoord)
 			const capturedPiece = this.getCapturedPiece(toCoord)
 			this.chessboard.move(fromCoord, toCoord)
 			if (capturedPiece) {
@@ -93,6 +94,7 @@ class Game {
 			this.movesHistory.push(move)
 			this.resetSquareSelection()
 			this.switchTurn()
+			this.undoneMoves = []
 		}
 	}
 
@@ -120,6 +122,11 @@ class Game {
 		const capturedPiece = lastMove.capturedPiece
 		this.chessboard.move(fromCoord, toCoord)
 		if (capturedPiece) this.chessboard.place(capturedPiece, fromCoord)
+		if (capturedPiece) {
+			this.captureSound.play()
+		} else {
+			this.moveSound.play()
+		}
 		this.switchTurn() // Revert turn change
 		this.undoneMoves.push(lastMove) // Store undone move
 	}
@@ -133,9 +140,12 @@ class Game {
 		const lastUndoneMove = this.undoneMoves.pop()
 		const fromCoord = lastUndoneMove.fromCoord
 		const toCoord = lastUndoneMove.toCoord
-		const capturedPiece = lastUndoneMove.capturedPiece
 		this.chessboard.move(fromCoord, toCoord)
-		if (capturedPiece) this.chessboard.place(capturedPiece, fromCoord)
+		if (lastUndoneMove.capturedPiece) {
+			this.captureSound.play()
+		} else {
+			this.moveSound.play()
+		}
 		this.movesHistory.push(lastUndoneMove) // Restore move to history
 		this.switchTurn() // Restore turn change
 	}
@@ -158,7 +168,7 @@ class Game {
 	// Switch turn between players
 	switchTurn() {
 		this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white'
-		this.chessboard.orient(this.currentTurn)
+		// this.chessboard.orient(this.currentTurn)
 		console.log(this.printMoveHistory())
 	}
 
@@ -174,7 +184,7 @@ class Game {
 
 	// Get captured piece at the destination square
 	getCapturedPiece(toCoord) {
-		const pieceAtDestination = this.chessboard.getPieceOnSquare(toCoord)
+		const pieceAtDestination = this.chessboard.getSquarePieceHtml(toCoord)
 		return pieceAtDestination ? pieceAtDestination.id : null
 	}
 
@@ -224,13 +234,13 @@ const game = new Game()
 const board = game.chessboard
 game.start()
 
+console.log(board.boardArray120)
+
 //? TESTS
-// board.place('D', 'c5')
-// board.move('c5', 'b2')
 // console.log(board.boardArray120)
 
-// board.place('P', 'a5')
-// board.place('B', 'c5')
+// board.place('p', 'b4')
+// board.place('Q', 'd4')
 // board.place('N', 'e5')
 // board.place('R', 'g5')
 // board.place('Q', 'h5')

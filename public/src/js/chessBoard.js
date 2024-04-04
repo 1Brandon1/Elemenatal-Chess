@@ -210,8 +210,13 @@ class Chessboard {
 		return square
 	}
 
+	getSquarePieceObj(coord) {
+		const index = this.coordinateToIndex120(coord)
+		return this.boardArray120[index].name
+	}
+
 	// Gets the html piece element on a square
-	getPieceOnSquare(coord) {
+	getSquarePieceHtml(coord) {
 		const index = this.coordinateToIndex120(coord)
 		const square = this.getSquareFromIndex120(index)
 		return square.querySelector('.piece')
