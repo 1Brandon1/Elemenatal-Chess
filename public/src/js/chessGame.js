@@ -8,7 +8,7 @@ class Game {
 		this.captureSound = new Audio('/assets/sounds/capture.mp3')
 
 		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		// this.startPosition = this.generateRandomFEN()
+		// this.startPosition = this.getRandomFEN()
 		this.currentTurn = 'white'
 		this.gameOver = false
 		this.movesHistory = []
@@ -20,7 +20,7 @@ class Game {
 		this.validMoves = []
 	}
 
-	generateRandomFEN() {
+	getRandomFEN() {
 		// Generate random piece placement for White
 		let blackPieces = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
 		for (let i = blackPieces.length - 1; i > 0; i--) {
@@ -35,15 +35,6 @@ class Game {
 			.join('')
 		fen += whitePieces
 		return fen
-	}
-
-	// Method to shuffle an array
-	shuffle(array) {
-		for (let i = array.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1))
-			;[array[i], array[j]] = [array[j], array[i]]
-		}
-		return array
 	}
 
 	start() {
@@ -74,7 +65,12 @@ class Game {
 	// Actions on first click
 	firstClick(square) {
 		this.selectedSquare = square
-		this.generateValidMoves()
+		const piece = this.selectedSquare.querySelector('.piece')
+		if (this.isPiecesTurn(this.selectedSquare)) {
+			this.validMoves = this.getValidMoves(piece.id, parseInt(this.selectedSquare.getAttribute('index120')))
+		}
+		this.chessboard.highlightSquares(this.validMoves)
+		this.selectedSquare.classList.add('clickedSquare')
 	}
 
 	// Actions on second click
@@ -99,16 +95,6 @@ class Game {
 	}
 
 	//!-------------- Move Related Methods --------------
-
-	// Find valid moves for the selected piece
-	generateValidMoves() {
-		const piece = this.selectedSquare.querySelector('.piece')
-		if (this.isPiecesTurn(this.selectedSquare)) {
-			this.validMoves = getValidMoves(piece.id, parseInt(this.selectedSquare.getAttribute('index120')))
-			this.chessboard.highlightSquares(this.validMoves)
-			this.selectedSquare.classList.add('clickedSquare')
-		}
-	}
 
 	// Undo the last move
 	undo() {
@@ -168,8 +154,16 @@ class Game {
 	// Switch turn between players
 	switchTurn() {
 		this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white'
-		// this.chessboard.orient(this.currentTurn)
 		console.log(this.printMoveHistory())
+	}
+
+	// Method to shuffle an array
+	shuffle(array) {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1))
+			;[array[i], array[j]] = [array[j], array[i]]
+		}
+		return array
 	}
 
 	// Reset square selection and valid moves
@@ -198,6 +192,69 @@ class Game {
 	isMoveInValidMoves(square) {
 		const toSquare = square.getAttribute('index120')
 		return this.validMoves.includes(parseInt(toSquare))
+	}
+
+	//!-------------- Move validation Methods --------------
+
+	getValidMoves(piece, currentPosition) {
+		const colour = piece === piece.toUpperCase() ? 'white' : 'black'
+		const pieceType = piece.toLowerCase()
+		// prettier-ignore
+		switch (pieceType) {
+			case 'p': return this.getPawnMoves(currentPosition, colour)
+			case 'n': return this.getKnightOrKingMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
+			case 'b': return this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
+			case 'r': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10])
+			case 'q': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11])
+			case 'k': return this.getKnightOrKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
+			default: return [] // No valid moves for unknown pieces
+		}
+	}
+
+	getKnightOrKingMoves(currentPosition, colour, offsets) {
+		let validMoves = []
+		for (let offset of offsets) {
+			const newPosition = currentPosition + offset
+			if (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupiedByAlly(newPosition, colour)) {
+				validMoves.push(newPosition)
+			}
+		}
+		return validMoves
+	}
+
+	getPawnMoves(currentPosition, colour) {
+		const dir = colour === 'white' ? -1 : 1
+		const startingRank = colour === 'white' ? 8 : 3
+		const offsets = [10 * dir]
+		let validMoves = []
+		if (Math.floor(currentPosition / 10) === startingRank) offsets.push(20 * dir)
+		for (let offset of offsets) {
+			const newPosition = currentPosition + offset
+			if (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupied(newPosition)) {
+				validMoves.push(newPosition)
+			}
+		}
+		const captureOffsets = [9 * dir, 11 * dir]
+		for (let offset of captureOffsets) {
+			const newPosition = currentPosition + offset
+			if (this.chessboard.isBoardIndex(newPosition) && this.chessboard.isOccupiedByOpponent(newPosition, colour)) {
+				validMoves.push(newPosition)
+			}
+		}
+		return validMoves
+	}
+
+	getSlidingMoves(currentPosition, colour, offsets) {
+		let validMoves = []
+		for (let offset of offsets) {
+			let newPosition = currentPosition + offset
+			while (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupiedByAlly(newPosition, colour)) {
+				validMoves.push(newPosition)
+				if (this.chessboard.isOccupiedByOpponent(newPosition, colour)) break
+				newPosition += offset
+			}
+		}
+		return validMoves
 	}
 }
 
@@ -229,24 +286,6 @@ class Move {
 	}
 }
 
-// Initialize and draw the game board
+// Sample implementation to show how the game would be initialized and started
 const game = new Game()
-const board = game.chessboard
 game.start()
-
-console.log(board.boardArray120)
-
-//? TESTS
-// console.log(board.boardArray120)
-
-// board.place('p', 'b4')
-// board.place('Q', 'd4')
-// board.place('N', 'e5')
-// board.place('R', 'g5')
-// board.place('Q', 'h5')
-
-// board.place('S', 'a4')
-// board.place('C', 'c4')
-// board.place('D', 'e4')
-// board.place('W', 'g4')
-// board.place('A', 'h4')

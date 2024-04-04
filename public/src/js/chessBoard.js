@@ -60,13 +60,13 @@ class Chessboard {
 		if (!this.isFen(fen)) throw new Error('Invalid FEN string')
 		const boardArray = new Array(64).fill('')
 		const fenParts = fen.split(' ')[0].split('/')
-		let index = 0
+		let i = 0
 		fenParts.forEach((rowFen) => {
 			for (let char of rowFen) {
 				if (/[1-8]/.test(char)) {
-					index += parseInt(char, 10)
+					i += parseInt(char, 10)
 				} else {
-					boardArray[index++] = char
+					boardArray[i++] = char
 				}
 			}
 		})
@@ -80,11 +80,11 @@ class Chessboard {
 		const boardArray = this.fenToArray64(fen)
 		this.clear()
 		const fragment = document.createDocumentFragment()
-		boardArray.forEach((pieceCode, index) => {
-			const index120 = this.mailbox64[index]
+		boardArray.forEach((pieceCode, squareIndex) => {
+			const index120 = this.mailbox64[squareIndex]
 			const square = document.createElement('div')
 			square.classList.add('square')
-			square.classList.add(((index % 8) + Math.floor(index / 8)) % 2 === 1 ? 'darkSquare' : 'lightSquare')
+			square.classList.add(((squareIndex % 8) + Math.floor(squareIndex / 8)) % 2 === 1 ? 'darkSquare' : 'lightSquare')
 			square.setAttribute('coordinate', this.index120ToCoordinate(index120))
 			square.setAttribute('index120', index120)
 			const piece = pieceCode ? this.createPiece(pieceCode) : ''
@@ -158,9 +158,9 @@ class Chessboard {
 	place(pieceName, coordinate) {
 		const piece = this.createPiece(pieceName)
 		if (!piece) throw new Error('Invalid piece name')
-		const index = this.coordinateToIndex120(coordinate)
-		const square = this.getSquareFromIndex120(index)
-		this.boardArray120[index] = piece
+		const squareIndex = this.coordinateToIndex120(coordinate)
+		const square = this.getSquareFromIndex120(squareIndex)
+		this.boardArray120[squareIndex] = piece
 		square.innerHTML = piece.getPieceHtml()
 	}
 
@@ -182,9 +182,9 @@ class Chessboard {
 		})
 	}
 
-	//!-------------- Helper Methods --------------
+	//!-------------- Coordinate Methods --------------
 
-	// Convert coordinate to index
+	// Convert coordinate to square index
 	coordinateToIndex120(coordinate) {
 		if (typeof coordinate !== 'string' || coordinate.length !== 2) throw new Error('Invalid coordinate format')
 		const file = coordinate.toLowerCase().charCodeAt(0) - 97
@@ -193,32 +193,58 @@ class Chessboard {
 		return this.mailbox64[rank * 8 + file]
 	}
 
-	// Convert index to coordinate
-	index120ToCoordinate(index) {
-		index = this.mailbox120[index]
-		if (index === undefined || index < 0 || index > 63) throw new Error('Invalid index')
-		const file = String.fromCharCode(97 + (index % 8))
-		const rank = 8 - Math.floor(index / 8)
+	// Convert square index to coordinate
+	index120ToCoordinate(squareIndex) {
+		squareIndex = this.mailbox120[squareIndex]
+		if (squareIndex === undefined || squareIndex < 0 || squareIndex > 63) throw new Error('Invalid square index')
+		const file = String.fromCharCode(97 + (squareIndex % 8))
+		const rank = 8 - Math.floor(squareIndex / 8)
 		return file + rank
 	}
 
-	// Gets the square element from index
-	getSquareFromIndex120(index) {
+	//!-------------- Helper Methods --------------
+
+	// Gets the square element from square index
+	getSquareFromIndex120(squareIndex) {
 		if (!this.boardElement) throw new Error('Board element not found')
-		const square = this.boardElement.querySelector(`.square[index120="${index}"]`)
+		const square = this.boardElement.querySelector(`.square[index120="${squareIndex}"]`)
 		if (!square) throw new Error('Square not found')
 		return square
 	}
 
+	// Retrieves the name of the chess piece object on a given square coordinate
 	getSquarePieceObj(coord) {
-		const index = this.coordinateToIndex120(coord)
-		return this.boardArray120[index].name
+		const squareIndex = this.coordinateToIndex120(coord)
+		return this.boardArray120[squareIndex].name
 	}
 
-	// Gets the html piece element on a square
+	// Retrieves the HTML piece element on a given square coordinate
 	getSquarePieceHtml(coord) {
-		const index = this.coordinateToIndex120(coord)
-		const square = this.getSquareFromIndex120(index)
+		const squareIndex = this.coordinateToIndex120(coord)
+		const square = this.getSquareFromIndex120(squareIndex)
 		return square.querySelector('.piece')
+	}
+
+	// Checks if the provided square  index represents a valid square on the board
+	isBoardIndex(squareIndex) {
+		return squareIndex >= 21 && squareIndex <= 98 && squareIndex % 10 !== 0 && (squareIndex + 1) % 10 !== 0
+	}
+
+	// Checks if the square at the provided square index is occupied by any chess piece
+	isOccupied(squareIndex) {
+		const piece = this.boardArray120[squareIndex]
+		return piece !== ''
+	}
+
+	// Checks if the square at the provided square index is occupied by an opponent's chess piece
+	isOccupiedByOpponent(squareIndex, colour) {
+		const piece = this.boardArray120[squareIndex]
+		return piece !== '' && piece.colour !== colour
+	}
+
+	// Checks if the square at the provided square index is occupied by an ally's chess piece
+	isOccupiedByAlly(squareIndex, colour) {
+		const piece = this.boardArray120[squareIndex]
+		return piece !== '' && piece.colour === colour
 	}
 }
