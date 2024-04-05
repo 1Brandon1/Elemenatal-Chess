@@ -164,6 +164,18 @@ class Chessboard {
 		square.innerHTML = piece.getPieceHtml()
 	}
 
+	// Find the index of the king of a certain color
+	findKingIndex(color) {
+		const kingPiece = color === 'white' ? 'K' : 'k'
+		for (let i = 0; i < this.boardArray120.length; i++) {
+			const piece = this.boardArray120[i]
+			if (piece && piece.name === kingPiece) {
+				return i // Found the king's index
+			}
+		}
+		throw new Error(`King of color ${color} not found on the board.`)
+	}
+
 	//!-------------- Highlight Methods --------------
 
 	// Highlights squares
@@ -215,7 +227,7 @@ class Chessboard {
 	// Retrieves the name of the chess piece object on a given square coordinate
 	getSquarePieceObj(coord) {
 		const squareIndex = this.coordinateToIndex120(coord)
-		return this.boardArray120[squareIndex].name
+		return this.boardArray120[squareIndex]
 	}
 
 	// Retrieves the HTML piece element on a given square coordinate
@@ -244,6 +256,7 @@ class Chessboard {
 
 	// Checks if the square at the provided square index is occupied by an ally's chess piece
 	isOccupiedByAlly(squareIndex, colour) {
+		if (!this.isBoardIndex(squareIndex)) return false
 		const piece = this.boardArray120[squareIndex]
 		return piece !== '' && piece.colour === colour
 	}
