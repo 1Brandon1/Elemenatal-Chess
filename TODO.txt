@@ -1,3 +1,2 @@
-- Add check, checkmate and en passant
+- Add check, checkmate, castleing and en passant
 - Make random move chess bot
-- figure out what favicon.ico error is with audio
