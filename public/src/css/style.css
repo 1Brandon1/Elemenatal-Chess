@@ -1,6 +1,4 @@
-/* 
-!---------- Global Styles ---------- 
-*/
+/* !---------- Global Styles ---------- */
 
 :root {
 	font-size: 16px;
@@ -30,9 +28,7 @@ main {
 	align-items: center;
 }
 
-/* 
-!---------- Theme Styles ---------- 
-*/
+/* !---------- Theme Styles ---------- */
 
 .dark {
 	--text-primary: #ffffff;
@@ -71,9 +67,7 @@ main {
 	display: block;
 }
 
-/* 
-!---------- Media Queries ---------- 
-*/
+/* !---------- Media Queries ---------- */
 
 /* Small screens */
 @media only screen and (max-width: 790px) {

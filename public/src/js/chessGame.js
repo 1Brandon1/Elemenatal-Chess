@@ -8,7 +8,7 @@ class Game {
 		this.captureSound = new Audio('/assets/sounds/capture.mp3')
 
 		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		// this.startPosition = this.getRandomFEN()
+		// this.startPosition = this.makeRandomFEN()
 		this.currentTurn = 'white'
 		this.gameOver = false
 		this.movesHistory = []
@@ -18,23 +18,6 @@ class Game {
 		this.squareClicked = this.squareClicked.bind(this)
 		this.selectedSquare = null
 		this.validMoves = []
-	}
-
-	getRandomFEN() {
-		// Generate random piece placement for White
-		let blackPieces = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
-		for (let i = blackPieces.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1))
-			;[blackPieces[i], blackPieces[j]] = [blackPieces[j], blackPieces[i]]
-		}
-		let fen = blackPieces.join('') + '/pppppppp/8/8/8/8/PPPPPPPP/'
-		let whitePieces = blackPieces
-			.map((piece) => {
-				return piece.toUpperCase()
-			})
-			.join('')
-		fen += whitePieces
-		return fen
 	}
 
 	start() {
@@ -68,9 +51,9 @@ class Game {
 		const piece = this.selectedSquare.querySelector('.piece')
 		if (this.isPiecesTurn(this.selectedSquare)) {
 			this.validMoves = this.getValidMoves(piece.id, parseInt(this.selectedSquare.getAttribute('index120')))
+			this.chessboard.highlightSquares(this.validMoves)
+			this.selectedSquare.classList.add('clickedSquare')
 		}
-		this.chessboard.highlightSquares(this.validMoves)
-		this.selectedSquare.classList.add('clickedSquare')
 	}
 
 	// Actions on second click
@@ -78,7 +61,7 @@ class Game {
 		if (this.isPiecesTurn(this.selectedSquare) && this.isMoveInValidMoves(square)) {
 			const fromCoord = this.selectedSquare.getAttribute('coordinate')
 			const toCoord = square.getAttribute('coordinate')
-			const piece = this.chessboard.getSquarePieceObj(fromCoord)
+			const piece = this.chessboard.getSquarePieceObj(fromCoord).name
 			const capturedPiece = this.getCapturedPiece(toCoord)
 			this.chessboard.move(fromCoord, toCoord)
 			if (capturedPiece) {
@@ -91,6 +74,16 @@ class Game {
 			this.resetSquareSelection()
 			this.switchTurn()
 			this.undoneMoves = []
+		}
+	}
+
+	// Reset square selection and valid moves
+	resetSquareSelection() {
+		if (this.selectedSquare) {
+			this.selectedSquare.classList.remove('clickedSquare')
+			this.chessboard.unhighlightSquares(this.validMoves)
+			this.selectedSquare = null
+			this.validMoves = []
 		}
 	}
 
@@ -157,6 +150,23 @@ class Game {
 		console.log(this.printMoveHistory())
 	}
 
+	makeRandomFEN() {
+		// Generate random piece placement for White
+		let blackPieces = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
+		for (let i = blackPieces.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1))
+			;[blackPieces[i], blackPieces[j]] = [blackPieces[j], blackPieces[i]]
+		}
+		let fen = blackPieces.join('') + '/pppppppp/8/8/8/8/PPPPPPPP/'
+		let whitePieces = blackPieces
+			.map((piece) => {
+				return piece.toUpperCase()
+			})
+			.join('')
+		fen += whitePieces
+		return fen
+	}
+
 	// Method to shuffle an array
 	shuffle(array) {
 		for (let i = array.length - 1; i > 0; i--) {
@@ -164,16 +174,6 @@ class Game {
 			;[array[i], array[j]] = [array[j], array[i]]
 		}
 		return array
-	}
-
-	// Reset square selection and valid moves
-	resetSquareSelection() {
-		if (this.selectedSquare) {
-			this.selectedSquare.classList.remove('clickedSquare')
-			this.chessboard.unhighlightSquares(this.validMoves)
-			this.selectedSquare = null
-			this.validMoves = []
-		}
 	}
 
 	// Get captured piece at the destination square
@@ -256,6 +256,20 @@ class Game {
 		}
 		return validMoves
 	}
+
+	// Get all possible moves of the specified colour
+	getAllMoves(colour) {
+		let allMoves = []
+		for (let i = 21; i <= 98; i++) {
+			if (this.chessboard.isOccupiedByAlly(i, colour)) {
+				const fromcoord = this.chessboard.index120ToCoordinate(i)
+				const piece = this.chessboard.getSquarePieceObj(fromcoord).name
+				const validMoves = this.getValidMoves(piece, i)
+				allMoves.push(...validMoves.map((move) => [fromcoord, this.chessboard.index120ToCoordinate(move)]))
+			}
+		}
+		return allMoves
+	}
 }
 
 class Move {
@@ -286,6 +300,5 @@ class Move {
 	}
 }
 
-// Sample implementation to show how the game would be initialized and started
 const game = new Game()
 game.start()

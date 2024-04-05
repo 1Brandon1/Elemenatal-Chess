@@ -1,6 +1,4 @@
-/* 
-!---------- Navigation Bar Styles ---------- 
-*/
+/* !---------- Navigation Bar Styles ---------- */
 
 .navbar {
 	position: fixed;
@@ -84,9 +82,7 @@
 	transform: rotate(-180deg);
 }
 
-/* 
-!---------- Media Queries ---------- 
-*/
+/* !---------- Media Queries ---------- */
 
 /* Small screens */
 @media only screen and (max-width: 790px) {
