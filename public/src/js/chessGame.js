@@ -1,7 +1,7 @@
 class Game {
 	constructor() {
 		// Initialize game variables
-		this.chessboard = new Chessboard()
+		this.chessboard = new Chessboard(this)
 		this.gameState = this.chessboard.boardArray120
 
 		this.moveSound = new Audio('/assets/sounds/move.mp3')
@@ -9,15 +9,17 @@ class Game {
 
 		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
 		// this.startPosition = this.makeRandomFEN()
+
 		this.currentTurn = 'white'
 		this.gameOver = false
-		this.movesHistory = []
-		this.undoneMoves = []
 
 		// Bind squareClicked function to the current instance
 		this.squareClicked = this.squareClicked.bind(this)
 		this.selectedSquare = null
+
 		this.validMoves = []
+		this.movesHistory = []
+		this.undoneMoves = []
 	}
 
 	start() {
@@ -32,21 +34,21 @@ class Game {
 	squareClicked(event) {
 		const square = event.currentTarget
 		if (!this.selectedSquare) {
-			this.firstClick(square)
+			this.onFirstClick(square)
 		} else {
 			if (square === this.selectedSquare) {
 				this.resetSquareSelection()
 			} else if (this.isPiecesTurn(square)) {
 				this.resetSquareSelection()
-				this.firstClick(square)
+				this.onFirstClick(square)
 			} else {
-				this.secondClick(square)
+				this.onSecondClick(square)
 			}
 		}
 	}
 
 	// Actions on first click
-	firstClick(square) {
+	onFirstClick(square) {
 		this.selectedSquare = square
 		const piece = this.selectedSquare.querySelector('.piece')
 		if (this.isPiecesTurn(this.selectedSquare)) {
@@ -57,7 +59,7 @@ class Game {
 	}
 
 	// Actions on second click
-	secondClick(square) {
+	onSecondClick(square) {
 		if (this.isPiecesTurn(this.selectedSquare) && this.isMoveInValidMoves(square)) {
 			const fromCoord = this.selectedSquare.getAttribute('coordinate')
 			const toCoord = square.getAttribute('coordinate')
@@ -150,6 +152,7 @@ class Game {
 		console.log(this.printMoveHistory())
 	}
 
+	// Generate a random FEN rank
 	makeRandomFEN() {
 		// Generate random piece placement for White
 		let blackPieces = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
@@ -196,22 +199,24 @@ class Game {
 
 	//!-------------- Move validation Methods --------------
 
+	// Get valid moves for a piece at a given position
 	getValidMoves(piece, currentPosition) {
 		const colour = piece === piece.toUpperCase() ? 'white' : 'black'
 		const pieceType = piece.toLowerCase()
 		// prettier-ignore
 		switch (pieceType) {
 			case 'p': return this.getPawnMoves(currentPosition, colour)
-			case 'n': return this.getKnightOrKingMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
+			case 'n': return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
 			case 'b': return this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
 			case 'r': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10])
 			case 'q': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11])
-			case 'k': return this.getKnightOrKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
+			case 'k': return this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
 			default: return [] // No valid moves for unknown pieces
 		}
 	}
 
-	getKnightOrKingMoves(currentPosition, colour, offsets) {
+	// Get valid moves for a knight
+	getKnightMoves(currentPosition, colour, offsets) {
 		let validMoves = []
 		for (let offset of offsets) {
 			const newPosition = currentPosition + offset
@@ -222,6 +227,19 @@ class Game {
 		return validMoves
 	}
 
+	// Get valid moves for a king
+	getKingMoves(currentPosition, colour, offsets) {
+		let validMoves = []
+		for (let offset of offsets) {
+			const newPosition = currentPosition + offset
+			if (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupiedByAlly(newPosition, colour)) {
+				validMoves.push(newPosition)
+			}
+		}
+		return validMoves
+	}
+
+	// Get valid moves for a pawn
 	getPawnMoves(currentPosition, colour) {
 		const dir = colour === 'white' ? -1 : 1
 		const startingRank = colour === 'white' ? 8 : 3
@@ -244,6 +262,7 @@ class Game {
 		return validMoves
 	}
 
+	// Get valid sliding moves (bishop, rook, queen)
 	getSlidingMoves(currentPosition, colour, offsets) {
 		let validMoves = []
 		for (let offset of offsets) {
@@ -272,6 +291,7 @@ class Game {
 	}
 }
 
+// Class representing a move in the game
 class Move {
 	constructor(piece, fromCoord, toCoord, capturedPiece = null) {
 		this.piece = piece
@@ -299,6 +319,3 @@ class Move {
 		return moveNotation
 	}
 }
-
-const game = new Game()
-game.start()

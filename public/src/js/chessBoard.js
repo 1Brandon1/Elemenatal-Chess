@@ -1,8 +1,9 @@
 class Chessboard {
-	constructor() {
+	constructor(game) {
 		this.boardElement = document.getElementById('Board')
 		this.boardArray120 = new Array(120).fill('off')
 		this.orientation = 'white'
+		this.game = game
 		// prettier-ignore
 		this.mailbox120 = [
 			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -89,7 +90,7 @@ class Chessboard {
 			square.setAttribute('index120', index120)
 			const piece = pieceCode ? this.createPiece(pieceCode) : ''
 			square.innerHTML = piece ? piece.getPieceHtml() : ''
-			square.addEventListener('click', (event) => game.squareClicked(event))
+			square.addEventListener('click', (event) => this.game.squareClicked(event))
 			this.boardArray120[index120] = piece
 			fragment.appendChild(square)
 		})

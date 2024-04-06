@@ -1,11 +1,7 @@
 // Import Express framework
 var express = require('express')
 var app = express()
-
-// Serve static files from the 'public' directory
 app.use(express.static('public'))
-
-// Create an HTTP server using Express
 var http = require('http').Server(app)
 var port = process.env.PORT || 3000 // Define port to listen on
 
