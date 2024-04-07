@@ -1,2 +1,1 @@
 - Add check, checkmate, castleing and en passant
-- Fix 2 forward pawn moves on start rank when piece is blocking

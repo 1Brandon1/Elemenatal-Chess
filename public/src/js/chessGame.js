@@ -1,22 +1,21 @@
 class Game {
 	constructor() {
 		// Initialize game variables
-		this.chessboard = new Chessboard(this)
-		this.gameState = this.chessboard.boardArray120
+		this.board = new Chessboard(this)
+		this.state = this.board.boardArray120
 
+		// Initialize audio effects
 		this.moveSound = new Audio('/assets/sounds/move.mp3')
 		this.captureSound = new Audio('/assets/sounds/capture.mp3')
 
+		// Default game settings
 		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		// this.startPosition = this.makeRandomFEN()
-
 		this.currentTurn = 'white'
 		this.gameOver = false
 
-		// Bind squareClicked function to the current instance
+		// Bind event handling method
 		this.squareClicked = this.squareClicked.bind(this)
 		this.selectedSquare = null
-
 		this.validMoves = []
 		this.movesHistory = []
 		this.undoneMoves = []
@@ -25,7 +24,7 @@ class Game {
 	start() {
 		this.movesHistory = []
 		this.undoneMoves = []
-		this.chessboard.draw(this.startPosition)
+		this.board.draw(this.startPosition)
 	}
 
 	//!-------------- Event Handling Methods --------------
@@ -53,7 +52,7 @@ class Game {
 		const piece = this.selectedSquare.querySelector('.piece')
 		if (this.isPiecesTurn(this.selectedSquare)) {
 			this.validMoves = this.getValidMoves(piece.id, parseInt(this.selectedSquare.getAttribute('index120')))
-			this.chessboard.highlightSquares(this.validMoves)
+			this.board.highlightSquares(this.validMoves)
 			this.selectedSquare.classList.add('clickedSquare')
 		}
 	}
@@ -63,9 +62,9 @@ class Game {
 		if (this.isPiecesTurn(this.selectedSquare) && this.isMoveInValidMoves(square)) {
 			const fromCoord = this.selectedSquare.getAttribute('coordinate')
 			const toCoord = square.getAttribute('coordinate')
-			const piece = this.chessboard.getSquarePieceObj(fromCoord).name
+			const piece = this.board.getSquarePieceObj(fromCoord).name
 			const capturedPiece = this.getCapturedPiece(toCoord)
-			this.chessboard.move(fromCoord, toCoord)
+			this.board.move(fromCoord, toCoord)
 			if (capturedPiece) {
 				this.captureSound.play()
 			} else {
@@ -83,7 +82,7 @@ class Game {
 	resetSquareSelection() {
 		if (this.selectedSquare) {
 			this.selectedSquare.classList.remove('clickedSquare')
-			this.chessboard.unhighlightSquares(this.validMoves)
+			this.board.unhighlightSquares(this.validMoves)
 			this.selectedSquare = null
 			this.validMoves = []
 		}
@@ -101,15 +100,15 @@ class Game {
 		const fromCoord = lastMove.toCoord
 		const toCoord = lastMove.fromCoord
 		const capturedPiece = lastMove.capturedPiece
-		this.chessboard.move(fromCoord, toCoord)
-		if (capturedPiece) this.chessboard.place(capturedPiece, fromCoord)
+		this.board.move(fromCoord, toCoord)
+		if (capturedPiece) this.board.place(capturedPiece, fromCoord)
 		if (capturedPiece) {
 			this.captureSound.play()
 		} else {
 			this.moveSound.play()
 		}
-		this.switchTurn() // Revert turn change
-		this.undoneMoves.push(lastMove) // Store undone move
+		this.switchTurn()
+		this.undoneMoves.push(lastMove)
 	}
 
 	// Redo the last undone move
@@ -121,7 +120,7 @@ class Game {
 		const lastUndoneMove = this.undoneMoves.pop()
 		const fromCoord = lastUndoneMove.fromCoord
 		const toCoord = lastUndoneMove.toCoord
-		this.chessboard.move(fromCoord, toCoord)
+		this.board.move(fromCoord, toCoord)
 		if (lastUndoneMove.capturedPiece) {
 			this.captureSound.play()
 		} else {
@@ -152,7 +151,7 @@ class Game {
 		console.log(this.printMoveHistory())
 	}
 
-	// Generate a random FEN rank
+	// Generate a random FEN string
 	makeRandomFEN() {
 		// Generate random piece placement for White
 		let blackPieces = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
@@ -181,7 +180,7 @@ class Game {
 
 	// Get captured piece at the destination square
 	getCapturedPiece(toCoord) {
-		const pieceAtDestination = this.chessboard.getSquarePieceHtml(toCoord)
+		const pieceAtDestination = this.board.getSquarePieceHtml(toCoord)
 		return pieceAtDestination ? pieceAtDestination.id : null
 	}
 
@@ -220,7 +219,7 @@ class Game {
 		let validMoves = []
 		for (let offset of offsets) {
 			const newPosition = currentPosition + offset
-			if (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupiedByAlly(newPosition, colour)) {
+			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
 				validMoves.push(newPosition)
 			}
 		}
@@ -232,7 +231,7 @@ class Game {
 		let validMoves = []
 		for (let offset of offsets) {
 			const newPosition = currentPosition + offset
-			if (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupiedByAlly(newPosition, colour)) {
+			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
 				validMoves.push(newPosition)
 			}
 		}
@@ -241,25 +240,38 @@ class Game {
 
 	// Get valid moves for a pawn
 	getPawnMoves(currentPosition, colour) {
-		const dir = colour === 'white' ? -1 : 1
+		const dir = colour === 'white' ? -1 : 1 // Determines the direction which the pawn moves (white moves upwards, black moves downwards)
 		const startingRank = colour === 'white' ? 8 : 3
 		const offsets = [10 * dir]
 		let validMoves = []
-		if (Math.floor(currentPosition / 10) === startingRank) offsets.push(20 * dir)
+
+		// If the pawn is on its starting rank, it can move forward two squares
+		if (
+			Math.floor(currentPosition / 10) === startingRank &&
+			!this.board.isOccupied(currentPosition + 10 * dir) && // Check if the square one step forward is unoccupied
+			!this.board.isOccupied(currentPosition + 20 * dir) // Check if the square two steps forward is unoccupied
+		) {
+			offsets.push(20 * dir)
+		}
+
+		// Check forward moves
 		for (let offset of offsets) {
 			const newPosition = currentPosition + offset
-			if (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupied(newPosition)) {
+			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupied(newPosition)) {
 				validMoves.push(newPosition)
 			}
 		}
-		const captureOffsets = [9 * dir, 11 * dir]
+
+		// Check diagonal capture moves
+		const captureOffsets = [9 * dir, 11 * dir] // Diagonal capture offsets
 		for (let offset of captureOffsets) {
 			const newPosition = currentPosition + offset
-			if (this.chessboard.isBoardIndex(newPosition) && this.chessboard.isOccupiedByOpponent(newPosition, colour)) {
+			if (this.board.isBoardIndex(newPosition) && this.board.isOccupiedByOpponent(newPosition, colour)) {
 				validMoves.push(newPosition)
 			}
 		}
-		return validMoves
+
+		return validMoves // Returns an array of valid move indices for the pawn
 	}
 
 	// Get valid sliding moves (bishop, rook, queen)
@@ -267,9 +279,9 @@ class Game {
 		let validMoves = []
 		for (let offset of offsets) {
 			let newPosition = currentPosition + offset
-			while (this.chessboard.isBoardIndex(newPosition) && !this.chessboard.isOccupiedByAlly(newPosition, colour)) {
+			while (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
 				validMoves.push(newPosition)
-				if (this.chessboard.isOccupiedByOpponent(newPosition, colour)) break
+				if (this.board.isOccupiedByOpponent(newPosition, colour)) break
 				newPosition += offset
 			}
 		}
@@ -280,11 +292,11 @@ class Game {
 	getAllMoves(colour) {
 		let allMoves = []
 		for (let i = 21; i <= 98; i++) {
-			if (this.chessboard.isOccupiedByAlly(i, colour)) {
-				const fromcoord = this.chessboard.index120ToCoordinate(i)
-				const piece = this.chessboard.getSquarePieceObj(fromcoord).name
+			if (this.board.isOccupiedByAlly(i, colour)) {
+				const fromcoord = this.board.index120ToCoordinate(i)
+				const piece = this.board.getSquarePieceObj(fromcoord).name
 				const validMoves = this.getValidMoves(piece, i)
-				allMoves.push(...validMoves.map((move) => [fromcoord, this.chessboard.index120ToCoordinate(move)]))
+				allMoves.push(...validMoves.map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
 			}
 		}
 		return allMoves

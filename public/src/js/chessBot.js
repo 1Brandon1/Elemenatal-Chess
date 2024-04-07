@@ -12,7 +12,7 @@ class Bot {
 			const squares = allMoves[randomIndex]
 			const fromCoord = squares[0]
 			const toCoord = squares[1]
-			this.game.chessboard.move(fromCoord, toCoord)
+			this.game.board.move(fromCoord, toCoord)
 		}
 	}
 }
