@@ -42,8 +42,7 @@ To start playing Chess?, follow these simple steps:
 
 ### 1. Game Setup
 
--   Players start with a semi-random but equal position.
--   Major pieces (queen, rook, bishop, knight) and pawns are placed randomly within there two starting ranks.
+-   Starts the same as normal chess.
 
 ### 2. Piece Upgrades
 

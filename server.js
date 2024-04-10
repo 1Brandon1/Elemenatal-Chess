@@ -10,6 +10,10 @@ app.get('/', function (req, res) {
 	res.sendFile(__dirname + '/public/src/html/index.html')
 })
 
+app.get('/Home', function (req, res) {
+	res.sendFile(__dirname + '/public/src/html/home.html')
+})
+
 // Listen on the specified port for incoming connections
 http.listen(port, function () {
 	console.log('listening on *:' + port)

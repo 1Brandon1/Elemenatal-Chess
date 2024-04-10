@@ -18,19 +18,14 @@
 
 .clickedSquare {
 	background-color: red;
-	/* box-shadow: inset 0px 0px 20px 1px #ff0000; */
 }
 
 .darkHighlight {
 	background-color: #bbcc49;
-	/* box-shadow: inset 0px 0px 0px 4px #bbcc49; */
-	/* box-shadow: inset 0px 0px 20px 1px #bbcc49; */
 }
 
 .lightHighlight {
 	background-color: #f5f67b;
-	/* box-shadow: inset 0px 0px 0px 4px #f5f67b; */
-	/* box-shadow: inset 0px 0px 20px 1px #f5f67b; */
 }
 
 .square img {

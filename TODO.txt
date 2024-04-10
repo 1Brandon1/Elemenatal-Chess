@@ -1,1 +1,6 @@
-- Add check, checkmate, castleing and en passant
+- replace let with const
+
+- Fix en passant
+- Add castleing
+- Add check, checkmate
+- piece.colour is never used but i can be
