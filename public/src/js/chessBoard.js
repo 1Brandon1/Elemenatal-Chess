@@ -155,6 +155,19 @@ class Chessboard {
 		this.boardArray120[fromSquareIndex] = ''
 	}
 
+	enPassant(fromCoord, toCoord) {
+		const fromSquareIndex = this.coordinateToIndex120(fromCoord)
+		const toSquareIndex = this.coordinateToIndex120(toCoord)
+		const dir = this.boardArray120[fromSquareIndex].colour === 'white' ? 1 : -1
+		const capturedPawnIndex = toSquareIndex + 10 * dir
+		const capturedPawnSquare = this.getSquareFromIndex120(capturedPawnIndex)
+		this.boardArray120[capturedPawnIndex] = ''
+		capturedPawnSquare.innerHTML = ''
+		this.move(fromCoord, toCoord)
+	}
+
+	castle() {}
+
 	// place a piece on a given square
 	place(pieceName, coordinate) {
 		const piece = this.createPiece(pieceName)
@@ -165,16 +178,16 @@ class Chessboard {
 		square.innerHTML = piece.getPieceHtml()
 	}
 
-	// Find the index of the king of a certain color
-	findKingIndex(color) {
-		const kingPiece = color === 'white' ? 'K' : 'k'
+	// Find the index of the king of a certain colour
+	findKingIndex(colour) {
+		const kingPiece = colour === 'white' ? 'K' : 'k'
 		for (let i = 0; i < this.boardArray120.length; i++) {
 			const piece = this.boardArray120[i]
 			if (piece && piece.name === kingPiece) {
 				return i // Found the king's index
 			}
 		}
-		throw new Error(`King of color ${color} not found on the board.`)
+		throw new Error(`King of colour ${colour} not found on the board.`)
 	}
 
 	//!-------------- Highlight Methods --------------

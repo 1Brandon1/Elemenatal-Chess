@@ -1,17 +1,27 @@
 const game = new Game()
 game.start()
 
-const bot1 = new Bot(game, 'white')
-const bot2 = new Bot(game, 'black')
+game.board.place('p', 'D4')
+game.board.place('P', 'D5')
+
+// const bot1 = new Bot(game, 'white')
+// const bot2 = new Bot(game, 'black')
 
 // setInterval(() => {
-// 	// if (game.currentTurn === bot1.colour && !game.gameOver) {
-// 	bot1.makeRandomMove()
-// 	game.switchTurn()
-// 	// }
-
-// 	// if (game.currentTurn === bot2.colour && !game.gameOver) {
+// if (game.currentTurn === bot2.colour && !game.gameOver) {
 // 	bot2.makeRandomMove()
 // 	game.switchTurn()
-// 	// }
-// }, 10)
+// }
+// }, 1000)
+
+// setInterval(() => {
+// if (game.currentTurn === bot1.colour && !game.gameOver) {
+// 	bot1.makeRandomMove()
+// 	game.switchTurn()
+// }
+
+// if (game.currentTurn === bot2.colour && !game.gameOver) {
+// 	bot2.makeRandomMove()
+// 	game.switchTurn()
+// }
+// }, 1000)

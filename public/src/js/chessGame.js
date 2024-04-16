@@ -16,6 +16,7 @@ class Game {
 		// Bind event handling method
 		this.squareClicked = this.squareClicked.bind(this)
 		this.selectedSquare = null
+		this.enPassantSquare = 75 //? test
 		this.validMoves = []
 		this.movesHistory = []
 		this.undoneMoves = []
@@ -63,11 +64,18 @@ class Game {
 		if (!this.isPiecesTurn(this.selectedSquare) || !this.isMoveInValidMoves(square)) return
 		const fromCoord = this.selectedSquare.getAttribute('coordinate')
 		const toCoord = square.getAttribute('coordinate')
-		const piece = this.board.getSquarePieceObj(fromCoord).name
-		const capturedPiece = this.getCapturedPiece(toCoord)
-		this.board.move(fromCoord, toCoord)
+		const piece = this.board.getSquarePieceObj(fromCoord)
+		let capturedPiece = null
+
+		if (this.isEnPassant(toCoord, piece)) {
+			this.board.enPassant(fromCoord, toCoord)
+		} else {
+			capturedPiece = this.getCapturedPiece(toCoord)
+			this.board.move(fromCoord, toCoord)
+		}
+
 		this.playSoundEffect(capturedPiece)
-		const move = { piece: piece, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece }
+		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece }
 		this.movesHistory.push(move)
 		this.resetSquareSelection()
 		this.switchTurn()
@@ -113,8 +121,8 @@ class Game {
 		const toCoord = lastUndoneMove.toCoord
 		this.board.move(fromCoord, toCoord)
 		this.playSoundEffect(lastUndoneMove.capturedPiece)
-		this.movesHistory.push(lastUndoneMove) // Restore move to history
-		this.switchTurn() // Restore turn change
+		this.movesHistory.push(lastUndoneMove)
+		this.switchTurn()
 	}
 
 	//!-------------- Move Conversion Methods --------------
@@ -149,13 +157,13 @@ class Game {
 			case 'r': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10])
 			case 'q': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11])
 			case 'k': return this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
-			default: return [] // No valid moves for unknown pieces
+			default: return [] 
 		}
 	}
 
 	// Get valid moves for a knight
 	getKnightMoves(currentPosition, colour, offsets) {
-		let validMoves = []
+		const validMoves = []
 		for (let offset of offsets) {
 			const newPosition = currentPosition + offset
 			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
@@ -167,7 +175,7 @@ class Game {
 
 	// Get valid moves for a king
 	getKingMoves(currentPosition, colour, offsets) {
-		let validMoves = []
+		const validMoves = []
 		for (let offset of offsets) {
 			const newPosition = currentPosition + offset
 			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
@@ -179,61 +187,46 @@ class Game {
 
 	// Get valid moves for a pawn
 	getPawnMoves(currentPosition, colour) {
-		const dir = colour === 'white' ? -1 : 1 // Determines the direction which the pawn moves (white moves upwards, black moves downwards)
+		const dir = colour === 'white' ? -1 : 1
 		const startingRank = colour === 'white' ? 8 : 3
 		const offsets = [10 * dir]
-		let validMoves = []
+		const validMoves = []
 
 		// If the pawn is on its starting rank, it can move forward two squares
 		if (
 			Math.floor(currentPosition / 10) === startingRank &&
-			!this.board.isOccupied(currentPosition + 10 * dir) && // Check if the square one step forward is unoccupied
-			!this.board.isOccupied(currentPosition + 20 * dir) // Check if the square two steps forward is unoccupied
+			!this.board.isOccupied(currentPosition + 10 * dir) &&
+			!this.board.isOccupied(currentPosition + 20 * dir)
 		) {
 			offsets.push(20 * dir)
 		}
 
-		// Check forward moves
-		for (let offset of offsets) {
-			const newPosition = currentPosition + offset
-			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupied(newPosition)) {
-				validMoves.push(newPosition)
-			}
-		}
-
-		// Check diagonal capture moves
-		const captureOffsets = [9 * dir, 11 * dir] // Diagonal capture offsets
+		// Check diagonal capture moves and en passant
+		const captureOffsets = [9 * dir, 11 * dir]
 		for (let offset of captureOffsets) {
-			const newPosition = currentPosition + offset
-			if (this.board.isBoardIndex(newPosition) && this.board.isOccupiedByOpponent(newPosition, colour)) {
-				validMoves.push(newPosition)
-			}
-
-			// Check for en passant
-			if (
-				this.board.isBoardIndex(newPosition) &&
-				this.board.isOccupiedByOpponent(currentPosition, colour) && // Check if there's an opponent's pawn on the current square
-				this.board.getSquarePieceObj(toCoord).name === 'p' && // Check if the adjacent piece is a pawn
-				this.movesHistory.length > 0 // Check if there's a move history (en passant can only occur after a pawn double step)
-			) {
-				const lastMove = this.movesHistory[this.movesHistory.length - 1]
-				if (
-					lastMove.piece === 'p' && // Check if the last moved piece was a pawn
-					lastMove.fromCoord.charAt(1) === (colour === 'white' ? '7' : '2') && // Check if the last move was a pawn double step
-					lastMove.toCoord === toCoord // Check if the last move landed on the adjacent square
-				) {
-					// En passant move is valid
+			let newPosition = currentPosition + offset
+			if (this.board.isBoardIndex(newPosition)) {
+				if (this.board.isOccupiedByOpponent(newPosition, colour)) {
+					validMoves.push(newPosition)
+				} else if (newPosition === this.enPassantSquare) {
 					validMoves.push(newPosition)
 				}
 			}
 		}
 
-		return validMoves // Returns an array of valid move indices for the pawn
+		// Check forward moves
+		for (let offset of offsets) {
+			let newPosition = currentPosition + offset
+			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupied(newPosition)) {
+				validMoves.push(newPosition)
+			}
+		}
+		return validMoves
 	}
 
 	// Get valid sliding moves (bishop, rook, queen)
 	getSlidingMoves(currentPosition, colour, offsets) {
-		let validMoves = []
+		const validMoves = []
 		for (let offset of offsets) {
 			let newPosition = currentPosition + offset
 			while (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
@@ -247,7 +240,7 @@ class Game {
 
 	// Get all possible moves of the specified colour
 	getAllMoves(colour) {
-		let allMoves = []
+		const allMoves = []
 		for (let i = 21; i <= 98; i++) {
 			if (this.board.isOccupiedByAlly(i, colour)) {
 				const fromcoord = this.board.index120ToCoordinate(i)
@@ -286,6 +279,10 @@ class Game {
 	getCapturedPiece(toCoord) {
 		const pieceAtDestination = this.board.getSquarePieceHtml(toCoord)
 		return pieceAtDestination ? pieceAtDestination.id : null
+	}
+
+	isEnPassant(toCoord, piece) {
+		return this.board.coordinateToIndex120(toCoord) === this.enPassantSquare && piece.name.toLowerCase() === 'p'
 	}
 
 	// Check if the clicked square contains the current player's piece

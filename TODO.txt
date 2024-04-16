@@ -1,6 +1,11 @@
-- replace let with const
+- Fix setting and unsetting en passant square
+- Fix undo and redo moves after en passent
+- improve isEnPassant method
 
-- Fix en passant
+potentially move enPassantSquare variable to board class,
+and in the move method put something like (in move method): if piece = 'p' check for enPassant 
+and then if it is set the enPassent square if not set the enPassant square to null
+
 - Add castleing
 - Add check, checkmate
 - piece.colour is never used but i can be
