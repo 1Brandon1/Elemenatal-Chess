@@ -4,6 +4,7 @@ class Chessboard {
 		this.boardArray120 = new Array(120).fill('off')
 		this.orientation = 'white'
 		this.game = game
+		this.enPassantSquare = null
 		// prettier-ignore
 		this.mailbox120 = [
 			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -153,8 +154,11 @@ class Chessboard {
 		toSquare.appendChild(pieceToMove)
 		this.boardArray120[toSquareIndex] = this.boardArray120[fromSquareIndex]
 		this.boardArray120[fromSquareIndex] = ''
+		const pieceObj = this.boardArray120[toSquareIndex]
+		this.updateEnPassantSquare(fromCoord, toCoord, pieceObj)
 	}
 
+	// Performs an en passant move on the board
 	enPassant(fromCoord, toCoord) {
 		const fromSquareIndex = this.coordinateToIndex120(fromCoord)
 		const toSquareIndex = this.coordinateToIndex120(toCoord)
@@ -166,6 +170,7 @@ class Chessboard {
 		this.move(fromCoord, toCoord)
 	}
 
+	// Performs a castle move on the board
 	castle() {}
 
 	// place a piece on a given square
@@ -229,6 +234,18 @@ class Chessboard {
 	}
 
 	//!-------------- Helper Methods --------------
+
+	// Updates the en passant square based on the current move.
+	updateEnPassantSquare(fromCoord, toCoord, piece) {
+		if (piece && piece.name.toLowerCase() === 'p') {
+			const fromSquareIndex = this.coordinateToIndex120(fromCoord)
+			const toSquareIndex = this.coordinateToIndex120(toCoord)
+			this.enPassantSquare = null
+			if (Math.abs(toSquareIndex - fromSquareIndex) === 20) {
+				this.enPassantSquare = (fromSquareIndex + toSquareIndex) / 2
+			}
+		}
+	}
 
 	// Gets the square element from square index
 	getSquareFromIndex120(squareIndex) {

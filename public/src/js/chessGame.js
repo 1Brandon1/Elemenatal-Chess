@@ -16,7 +16,6 @@ class Game {
 		// Bind event handling method
 		this.squareClicked = this.squareClicked.bind(this)
 		this.selectedSquare = null
-		this.enPassantSquare = 75 //? test
 		this.validMoves = []
 		this.movesHistory = []
 		this.undoneMoves = []
@@ -208,7 +207,7 @@ class Game {
 			if (this.board.isBoardIndex(newPosition)) {
 				if (this.board.isOccupiedByOpponent(newPosition, colour)) {
 					validMoves.push(newPosition)
-				} else if (newPosition === this.enPassantSquare) {
+				} else if (newPosition === this.board.enPassantSquare) {
 					validMoves.push(newPosition)
 				}
 			}
@@ -282,7 +281,7 @@ class Game {
 	}
 
 	isEnPassant(toCoord, piece) {
-		return this.board.coordinateToIndex120(toCoord) === this.enPassantSquare && piece.name.toLowerCase() === 'p'
+		return this.board.coordinateToIndex120(toCoord) === this.board.enPassantSquare && piece.name.toLowerCase() === 'p'
 	}
 
 	// Check if the clicked square contains the current player's piece
