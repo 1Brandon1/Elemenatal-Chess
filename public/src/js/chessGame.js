@@ -126,13 +126,14 @@ class Game {
 
 	//!-------------- Move Conversion Methods --------------
 
+	// Convert move to a desription (eg. P from d2 to d4)
 	moveToString(move) {
 		let moveString = `${move.piece} from ${move.fromCoord} to ${move.toCoord}`
 		if (move.capturedPiece) moveString += `, capturing ${move.capturedPiece}`
 		return moveString
 	}
 
-	// Function to convert move to chess notation
+	// Convert move to chess notation
 	moveToChessNotation(move) {
 		const pieceNotation = move.piece
 		const toNotation = move.toCoord
@@ -156,11 +157,16 @@ class Game {
 			case 'r': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10])
 			case 'q': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11])
 			case 'k': return this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
+			case 's': return this.getSquireMoves(currentPosition, colour)
+			case 'c': return this.getCardinalMoves(currentPosition, colour)
+			case 'd': return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -11, -9, -8, 8, 9, 11, 12, 19, 21])
+			case 'w': return this.getWardenMoves(currentPosition, colour)
+			case 'a': return this.getArchonMoves(currentPosition, colour) 
 			default: return [] 
 		}
 	}
 
-	// Get valid moves for a knight
+	// Get valid moves for a knight and other pieces with similar movement
 	getKnightMoves(currentPosition, colour, offsets) {
 		const validMoves = []
 		for (let offset of offsets) {
@@ -207,7 +213,7 @@ class Game {
 			if (this.board.isBoardIndex(newPosition)) {
 				if (this.board.isOccupiedByOpponent(newPosition, colour)) {
 					validMoves.push(newPosition)
-				} else if (newPosition === this.board.enPassantSquare) {
+				} else if (newPosition === this.board.enPassantIndex) {
 					validMoves.push(newPosition)
 				}
 			}
@@ -235,6 +241,34 @@ class Game {
 			}
 		}
 		return validMoves
+	}
+
+	// Get valid moves for a squire
+	getSquireMoves(currentPosition, colour) {
+		const pawnMoves = this.getPawnMoves(currentPosition, colour)
+		return pawnMoves.concat(this.getKingMoves(currentPosition, colour, [-1, 1]))
+	}
+
+	// Get valid moves for a cardinal
+	getCardinalMoves(currentPosition, colour) {
+		return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21]).concat(
+			this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
+		)
+	}
+
+	// Get valid moves for a warden
+	getWardenMoves(currentPosition, colour) {
+		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]).concat(
+			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
+		)
+	}
+
+	// Get valid moves for a archon
+	getArchonMoves(currentPosition, colour) {
+		console.log('ki')
+		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]).concat(
+			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
+		)
 	}
 
 	// Get all possible moves of the specified colour
@@ -281,7 +315,10 @@ class Game {
 	}
 
 	isEnPassant(toCoord, piece) {
-		return this.board.coordinateToIndex120(toCoord) === this.board.enPassantSquare && piece.name.toLowerCase() === 'p'
+		return (
+			this.board.coordinateToIndex120(toCoord) === this.board.enPassantIndex &&
+			(piece.name.toLowerCase() === 'p' || piece.name.toLowerCase() === 's')
+		)
 	}
 
 	// Check if the clicked square contains the current player's piece
