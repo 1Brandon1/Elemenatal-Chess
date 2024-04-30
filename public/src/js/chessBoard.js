@@ -31,6 +31,11 @@ class Chessboard {
 			81, 82, 83, 84, 85, 86, 87, 88,
 			91, 92, 93, 94, 95, 96, 97, 98
 		]
+		this.moveSound = new Audio('/assets/sounds/move.mp3')
+		this.captureSound = new Audio('/assets/sounds/capture.mp3')
+		this.castleSound = new Audio('/assets/sounds/capture.mp3')
+		this.checkSound = new Audio('/assets/sounds/capture.mp3')
+		this.promoteSound = new Audio('/assets/sounds/capture.mp3')
 	}
 
 	//!-------------- Fen Manipulation Methods --------------
@@ -150,7 +155,12 @@ class Chessboard {
 		const pieceToMove = fromSquare.querySelector('.piece')
 		if (!pieceToMove) throw new Error('No piece to move on the source square.')
 		const existingPiece = toSquare.querySelector('.piece')
-		if (existingPiece) toSquare.removeChild(existingPiece)
+		if (existingPiece) {
+			this.captureSound.play()
+			toSquare.removeChild(existingPiece)
+		} else {
+			this.moveSound.play()
+		}
 		toSquare.appendChild(pieceToMove)
 		this.boardArray120[toSquareIndex] = this.boardArray120[fromSquareIndex]
 		this.boardArray120[fromSquareIndex] = ''

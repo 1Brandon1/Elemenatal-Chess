@@ -4,12 +4,9 @@ class Game {
 		this.board = new Chessboard(this)
 		this.state = this.board.boardArray120
 
-		// Initialize audio effects
-		this.moveSound = new Audio('/assets/sounds/move.mp3')
-		this.captureSound = new Audio('/assets/sounds/capture.mp3')
-
 		// Default game settings
-		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		this.startPosition = 'r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1'
 		this.currentTurn = 'white'
 		this.gameOver = false
 
@@ -73,7 +70,6 @@ class Game {
 			this.board.move(fromCoord, toCoord)
 		}
 
-		this.playSoundEffect(capturedPiece)
 		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece }
 		this.movesHistory.push(move)
 		this.resetSquareSelection()
@@ -107,7 +103,6 @@ class Game {
 		const capturedPiece = lastMove.capturedPiece
 		this.board.move(fromCoord, toCoord)
 		if (capturedPiece) this.board.place(capturedPiece, fromCoord)
-		this.playSoundEffect(capturedPiece)
 		this.switchTurn()
 		this.undoneMoves.push(lastMove)
 	}
@@ -119,7 +114,6 @@ class Game {
 		const fromCoord = lastUndoneMove.fromCoord
 		const toCoord = lastUndoneMove.toCoord
 		this.board.move(fromCoord, toCoord)
-		this.playSoundEffect(lastUndoneMove.capturedPiece)
 		this.movesHistory.push(lastUndoneMove)
 		this.switchTurn()
 	}
@@ -265,7 +259,6 @@ class Game {
 
 	// Get valid moves for a archon
 	getArchonMoves(currentPosition, colour) {
-		console.log('ki')
 		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]).concat(
 			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
 		)
@@ -286,14 +279,6 @@ class Game {
 	}
 
 	//!-------------- Helper Methods --------------
-
-	playSoundEffect(capturedPiece) {
-		if (capturedPiece) {
-			this.captureSound.play()
-		} else {
-			this.moveSound.play()
-		}
-	}
 
 	// Print move history
 	printMoveHistory() {
