@@ -5,8 +5,8 @@ class Game {
 		this.state = this.board.boardArray120
 
 		// Default game settings
-		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		this.startPosition = 'r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1'
+		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		// this.startPosition = 'r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1'
 		this.currentTurn = 'white'
 		this.gameOver = false
 
@@ -50,7 +50,7 @@ class Game {
 		const piece = this.board.getSquarePieceObj(squareCoord)
 		if (!this.isPiecesTurn(this.selectedSquare)) return
 		const squareIndex = parseInt(this.selectedSquare.getAttribute('index120'))
-		this.validMoves = this.getValidMoves(piece.name, squareIndex)
+		this.validMoves = this.getValidMoves(piece, squareIndex)
 		this.board.highlightSquares(this.validMoves)
 		this.selectedSquare.classList.add('clickedSquare')
 	}
@@ -62,15 +62,21 @@ class Game {
 		const toCoord = square.getAttribute('coordinate')
 		const piece = this.board.getSquarePieceObj(fromCoord)
 		let capturedPiece = null
+		let capturedCoord = null
 
 		if (this.isEnPassant(toCoord, piece)) {
+			const dir = piece.name === piece.name.toUpperCase() ? -1 : 1
+			const enPassentCoord = this.board.index120ToCoordinate(this.board.enPassantIndex - 10 * dir)
+			capturedPiece = this.getCapturedPiece(enPassentCoord)
+			capturedCoord = enPassentCoord
 			this.board.enPassant(fromCoord, toCoord)
 		} else {
 			capturedPiece = this.getCapturedPiece(toCoord)
+			if (capturedPiece) capturedCoord = toCoord
 			this.board.move(fromCoord, toCoord)
 		}
 
-		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece }
+		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece, capturedCoord: capturedCoord }
 		this.movesHistory.push(move)
 		this.resetSquareSelection()
 		this.switchTurn()
@@ -94,15 +100,15 @@ class Game {
 		console.log(this.printMoveHistory())
 	}
 
-	// Undo the last move
 	undo() {
 		if (this.movesHistory.length === 0) return
 		const lastMove = this.movesHistory.pop()
-		const fromCoord = lastMove.toCoord
-		const toCoord = lastMove.fromCoord
+		const fromCoord = lastMove.fromCoord
+		const toCoord = lastMove.toCoord
 		const capturedPiece = lastMove.capturedPiece
-		this.board.move(fromCoord, toCoord)
-		if (capturedPiece) this.board.place(capturedPiece, fromCoord)
+		const capturedCoord = lastMove.capturedCoord
+		this.board.move(toCoord, fromCoord)
+		if (capturedPiece) this.board.place(capturedPiece, capturedCoord)
 		this.switchTurn()
 		this.undoneMoves.push(lastMove)
 	}
@@ -141,8 +147,8 @@ class Game {
 
 	// Get valid moves for a piece at a given position
 	getValidMoves(piece, currentPosition) {
-		const colour = piece === piece.toUpperCase() ? 'white' : 'black'
-		const pieceType = piece.toLowerCase()
+		const colour = piece.colour
+		const pieceType = piece.name.toLowerCase()
 		// prettier-ignore
 		switch (pieceType) {
 			case 'p': return this.getPawnMoves(currentPosition, colour)

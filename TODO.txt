@@ -1,7 +1,3 @@
-- Fix undo and redo moves after en passent
-
 - Add castleing
 - Add check, checkmate
 - Add pawn promotion
-
-- piece.colour is never used but it can be
