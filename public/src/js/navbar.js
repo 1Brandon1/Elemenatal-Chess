@@ -1,7 +1,8 @@
-// Define theme mappings
 const themeMap = {
 	dark: 'light',
-	light: 'magic',
+	light: 'ocean',
+	ocean: 'wood',
+	wood: 'magic',
 	magic: 'dark'
 }
 
@@ -21,7 +22,7 @@ document.getElementById('themeButton').addEventListener('click', toggleTheme)
 
 //!-------------- Theme Management --------------
 
-// Toggle theme between light, dark, and magic
+// Toggle theme between light, dark, magic, ocean, forest, and desert
 function toggleTheme() {
 	const current = localStorage.getItem('theme') || Object.keys(themeMap)[0]
 	const next = themeMap[current]
