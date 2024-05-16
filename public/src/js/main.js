@@ -29,4 +29,5 @@ const bot2 = new Bot(game, 'black')
 // game.board.place('w', 'f4')
 // game.board.place('A', 'g4')
 
-game.board.place('p', 'd4')
+game.board.place('P', 'd7')
+game.board.place('p', 'd2')

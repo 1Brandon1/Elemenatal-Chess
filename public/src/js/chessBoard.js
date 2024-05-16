@@ -180,6 +180,21 @@ class Chessboard {
 		this.move(fromCoord, toCoord)
 	}
 
+	// Performs a pawn promotion on the board
+	promote(coord, colour) {
+		const squareIndex = this.coordinateToIndex120(coord)
+		const squareElement = this.getSquareFromIndex120(squareIndex)
+
+		// Add option for user to pick piece to promote to
+		const option = 'Q'
+
+		let newPiece = option
+		if (colour === 'black') newPiece = option.toLowerCase()
+		const pieceObj = this.createPiece(newPiece)
+		squareElement.innerHTML = pieceObj.getPieceHtml()
+		this.boardArray120[squareIndex] = pieceObj
+	}
+
 	// Performs a castle move on the board
 	castle() {}
 
@@ -191,18 +206,6 @@ class Chessboard {
 		const square = this.getSquareFromIndex120(squareIndex)
 		this.boardArray120[squareIndex] = piece
 		square.innerHTML = piece.getPieceHtml()
-	}
-
-	// Find the index of the king of a certain colour
-	findKingIndex(colour) {
-		const kingPiece = colour === 'white' ? 'K' : 'k'
-		for (let i = 0; i < this.boardArray120.length; i++) {
-			const piece = this.boardArray120[i]
-			if (piece && piece.name === kingPiece) {
-				return i // Found the king's index
-			}
-		}
-		throw new Error(`King of colour ${colour} not found on the board.`)
 	}
 
 	//!-------------- Highlight Methods --------------
@@ -245,6 +248,18 @@ class Chessboard {
 
 	//!-------------- Helper Methods --------------
 
+	// Find the index of the king of a certain colour
+	findKingIndex(colour) {
+		const kingPiece = colour === 'white' ? 'K' : 'k'
+		for (let i = 0; i < this.boardArray120.length; i++) {
+			const piece = this.boardArray120[i]
+			if (piece && piece.name === kingPiece) {
+				return i // Found the king's index
+			}
+		}
+		throw new Error(`King of colour ${colour} not found on the board.`)
+	}
+
 	// Updates the en passant square based on the current move.
 	updateEnPassantIndex(fromCoord, toCoord, piece) {
 		if (piece && piece.name.toLowerCase() === 'p') {
@@ -274,8 +289,7 @@ class Chessboard {
 	// Retrieves the HTML piece element on a given square coordinate
 	getSquarePieceHtml(coord) {
 		const squareIndex = this.coordinateToIndex120(coord)
-		const square = this.getSquareFromIndex120(squareIndex)
-		return square.querySelector('.piece')
+		return this.boardArray120[squareIndex].pieceHtml
 	}
 
 	// Checks if the provided square  index represents a valid square on the board

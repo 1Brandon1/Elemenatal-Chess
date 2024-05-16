@@ -5,23 +5,26 @@ class Game {
 		this.state = this.board.boardArray120
 
 		// Default game settings
-		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		this.startPosition = '8/8/8/8/8/8/8/8'
 		// this.startPosition = 'r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1'
 		this.currentTurn = 'white'
 		this.gameOver = false
+		this.validMoves = []
+		this.movesHistory = []
+		this.undoneMoves = []
 
 		// Bind event handling method
 		this.squareClicked = this.squareClicked.bind(this)
 		this.selectedSquare = null
-		this.validMoves = []
-		this.movesHistory = []
-		this.undoneMoves = []
 	}
 
 	start() {
 		this.movesHistory = []
 		this.undoneMoves = []
+		this.currentTurn = 'white'
 		this.board.draw(this.startPosition)
+		this.board.enPassantIndex = null
 	}
 
 	//!-------------- Event Handling Methods --------------
@@ -74,6 +77,7 @@ class Game {
 			capturedPiece = this.getCapturedPiece(toCoord)
 			if (capturedPiece) capturedCoord = toCoord
 			this.board.move(fromCoord, toCoord)
+			if (this.isPromotion(piece, toCoord)) this.board.promote(toCoord, piece.colour)
 		}
 
 		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece, capturedCoord: capturedCoord }
@@ -310,6 +314,10 @@ class Game {
 			this.board.coordinateToIndex120(toCoord) === this.board.enPassantIndex &&
 			(piece.name.toLowerCase() === 'p' || piece.name.toLowerCase() === 's')
 		)
+	}
+
+	isPromotion(piece, toCoord) {
+		return piece.name.toLowerCase() === 'p' && (toCoord[1] === '1' || toCoord[1] === '8')
 	}
 
 	// Check if the clicked square contains the current player's piece

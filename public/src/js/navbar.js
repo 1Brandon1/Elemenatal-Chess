@@ -1,9 +1,9 @@
 const themeMap = {
 	dark: 'light',
 	light: 'ocean',
-	ocean: 'wood',
-	wood: 'magic',
-	magic: 'dark'
+	ocean: 'magic',
+	magic: 'wood',
+	wood: 'dark'
 }
 
 // Retrieve current theme from localStorage or set default

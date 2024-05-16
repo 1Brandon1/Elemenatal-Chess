@@ -6,6 +6,7 @@ class Piece {
 		this.colour = colour
 		this.value = value
 		this.piecesTaken = 0
+		this.pieceHtml = null
 	}
 
 	// Generate HTML representation of the piece
@@ -13,7 +14,8 @@ class Piece {
 		if (!this.name) return ''
 		const piececolour = this.colour === 'white' ? 'w' : 'b'
 		const pieceImgSrc = `/assets/${this.assetFolder}/${piececolour}${this.name}.svg`
-		return `<div class="piece ${this.colour}" id="${this.name}"><img src="${pieceImgSrc}" alt=""></div>`
+		this.pieceHtml = `<div class="piece ${this.colour}" id="${this.name}"><img src="${pieceImgSrc}" alt=""></div>`
+		return this.pieceHtml
 	}
 }
 

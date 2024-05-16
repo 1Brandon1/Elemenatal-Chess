@@ -1,7 +1,8 @@
-Fix redoing enpassant moves
+- Add option for user to pick piece to promote to
+
+- Fix redoing enpassant moves
 
 - sounds dont play when bot move
 
 - Add castleing
 - Add check, checkmate
-- Add pawn promotion
