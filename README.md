@@ -46,11 +46,7 @@ To start playing Chess?, follow these simple steps:
 
 ### 2. Piece Upgrades
 
--   **Pawns:** Upgrade to **Squires** after capturing one pieces, allowing them to move one square left, right, or forward and diagonally forward.
--   **Bishops:** Upgrade to **Cardinals** after capturing two pieces, gaining the ability to move like a knight.
--   **Knights:** Upgrade to **Dragons** after capturing two pieces, gaining the ability to move one square diagonally.
--   **Rooks:** Upgrade to **Wardens** after capturing three pieces, gaining the ability to move like a knight.
--   **Queens:** Upgrade to **Archons** after capturing three pieces, gaining combined movement of a knight.
+- TBD
 
 ### 3. King
 
