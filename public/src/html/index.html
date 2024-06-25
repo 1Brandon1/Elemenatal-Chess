@@ -134,7 +134,9 @@
 		</nav>
 
 		<main>
-			<div class="chessboard" id="Board"></div>
+			<div class="chessboard-container">
+				<div class="chessboard" id="Board"></div>
+			</div>
 
 			<div class="promotion">
 				<div class="promotion-queen"></div>
@@ -143,11 +145,11 @@
 				<div class="promotion-knight"></div>
 			</div>
 
-			<div class="button-container">
-				<button id="undo-button">Undo</button>
-				<button id="redo-button">Redo</button>
-				<button id="flip-button">Flip</button>
-				<button id="start-button">Start</button>
+			<div class="container">
+				<button class="board-button" onclick="game.board.flip()">Flip</button>
+				<button class="board-button" onclick="game.undo()">Undo</button>
+				<button class="board-button" onclick="game.redo()">Redo</button>
+				<button class="board-button" onclick="game.start()">Restart</button>
 			</div>
 		</main>
 
