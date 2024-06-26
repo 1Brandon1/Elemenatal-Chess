@@ -30,6 +30,13 @@
 	font-size: 1.8vw;
 }
 
+.board-button svg {
+	height: 3vh;
+	min-width: 2rem;
+	margin: 0 1.5rem;
+	color: var(--text-primary);
+}
+
 .board-button:hover {
 	transform: translateY(-0.3vw);
 }
