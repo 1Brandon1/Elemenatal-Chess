@@ -145,7 +145,7 @@ class Chessboard {
 		}
 	}
 
-	// Move a piece on the chessboard
+	// Move a piece on the chessboard, including castling
 	move(fromCoord, toCoord) {
 		const fromSquareIndex = this.coordinateToIndex120(fromCoord)
 		const toSquareIndex = this.coordinateToIndex120(toCoord)
@@ -166,6 +166,36 @@ class Chessboard {
 		this.boardArray120[fromSquareIndex] = ''
 		const pieceObj = this.boardArray120[toSquareIndex]
 		this.updateEnPassantIndex(fromCoord, toCoord, pieceObj)
+
+		// Handle castling
+		if (pieceToMove.id.toLowerCase() === 'k') {
+			const moveDistance = Math.abs(fromSquareIndex - toSquareIndex)
+			if (moveDistance === 2 || moveDistance === 3) {
+				this.castle(fromSquareIndex, toSquareIndex)
+			}
+		}
+	}
+
+	// Performs a castle move on the board
+	castle(kingFromIndex, kingToIndex) {
+		console.log('moveDistance')
+		const direction = kingToIndex > kingFromIndex ? 1 : -1 // 1 for kingside, -1 for queenside
+		const rookFromIndex = direction === 1 ? kingFromIndex + 3 : kingFromIndex - 4
+		const rookToIndex = kingToIndex - direction
+
+		const rookFromSquare = this.getSquareFromIndex120(rookFromIndex)
+		const rookToSquare = this.getSquareFromIndex120(rookToIndex)
+		const rookToMove = rookFromSquare.querySelector('.piece')
+
+		if (rookToMove) {
+			// Move the rook
+			rookToSquare.appendChild(rookToMove)
+			this.boardArray120[rookToIndex] = this.boardArray120[rookFromIndex]
+			this.boardArray120[rookFromIndex] = ''
+
+			// Play castling sound
+			this.castleSound.play()
+		}
 	}
 
 	// Performs an en passant move on the board
@@ -194,9 +224,6 @@ class Chessboard {
 		squareElement.innerHTML = pieceObj.getPieceHtml()
 		this.boardArray120[squareIndex] = pieceObj
 	}
-
-	// Performs a castle move on the board
-	castle() {}
 
 	// place a piece on a given square
 	place(pieceName, coordinate) {
