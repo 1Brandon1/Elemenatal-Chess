@@ -6,13 +6,18 @@ class Game {
 
 		// Default game settings
 		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		this.startPosition = '8/8/8/8/8/8/8/8'
-		// this.startPosition = 'r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1'
+		this.startPosition = 'r3k2r/8/8/8/8/8/8/R3K2R'
 		this.currentTurn = 'white'
 		this.gameOver = false
 		this.validMoves = []
 		this.movesHistory = []
 		this.undoneMoves = []
+
+		// Initialize castling state
+		this.castlingRights = {
+			white: { kingside: true, queenside: true },
+			black: { kingside: true, queenside: true }
+		}
 
 		// Bind event handling method
 		this.squareClicked = this.squareClicked.bind(this)
@@ -80,11 +85,26 @@ class Game {
 			if (this.isPromotion(piece, toCoord)) this.board.promote(toCoord, piece.colour)
 		}
 
+		this.updateCastlingRights(fromCoord, piece)
 		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece, capturedCoord: capturedCoord }
 		this.movesHistory.push(move)
 		this.resetSquareSelection()
 		this.switchTurn()
 		this.undoneMoves = []
+	}
+
+	// Update castling rights based on the move
+	updateCastlingRights(fromCoord, piece) {
+		const pieceName = piece.name.toLowerCase()
+		const colour = piece.colour
+
+		if (pieceName === 'k') {
+			this.castlingRights[colour].kingside = false
+			this.castlingRights[colour].queenside = false
+		} else if (pieceName === 'r') {
+			if (fromCoord === 'a1' || fromCoord === 'a8') this.castlingRights[colour].queenside = false
+			if (fromCoord === 'h1' || fromCoord === 'h8') this.castlingRights[colour].kingside = false
+		}
 	}
 
 	//!-------------- Move Manegment Methods --------------
@@ -147,7 +167,7 @@ class Game {
 		return moveNotation
 	}
 
-	//!-------------- Move validation Methods --------------
+	//!-------------- Move Validation Methods --------------
 
 	// Get valid moves for a piece at a given position
 	getValidMoves(piece, currentPosition) {
@@ -169,7 +189,6 @@ class Game {
 			default: return [] 
 		}
 	}
-
 	// Get valid moves for a knight and other pieces with similar movement
 	getKnightMoves(currentPosition, colour, offsets) {
 		const validMoves = []
@@ -191,6 +210,15 @@ class Game {
 				validMoves.push(newPosition)
 			}
 		}
+
+		// Add castling moves
+		if (this.canCastleKingside(colour)) {
+			validMoves.push(currentPosition + 2) // Kingside castling
+		}
+		if (this.canCastleQueenside(colour)) {
+			validMoves.push(currentPosition - 3) // Queenside castling
+		}
+
 		return validMoves
 	}
 
@@ -247,6 +275,22 @@ class Game {
 		return validMoves
 	}
 
+	// Get all possible moves of the specified colour excluding king moves
+	getAllMovesWithoutKing(colour) {
+		const allMoves = []
+		for (let i = 21; i <= 98; i++) {
+			if (this.board.isOccupiedByAlly(i, colour)) {
+				const fromcoord = this.board.index120ToCoordinate(i)
+				const piece = this.board.getSquarePieceObj(fromcoord)
+				if (piece.name.toLowerCase() !== 'k') {
+					const validMoves = this.getValidMoves(piece, i)
+					allMoves.push(...validMoves.map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
+				}
+			}
+		}
+		return allMoves
+	}
+
 	// Get valid moves for a squire
 	getSquireMoves(currentPosition, colour) {
 		const pawnMoves = this.getPawnMoves(currentPosition, colour)
@@ -280,7 +324,7 @@ class Game {
 		for (let i = 21; i <= 98; i++) {
 			if (this.board.isOccupiedByAlly(i, colour)) {
 				const fromcoord = this.board.index120ToCoordinate(i)
-				const piece = this.board.getSquarePieceObj(fromcoord).name
+				const piece = this.board.getSquarePieceObj(fromcoord)
 				const validMoves = this.getValidMoves(piece, i)
 				allMoves.push(...validMoves.map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
 			}
@@ -330,5 +374,24 @@ class Game {
 	isMoveInValidMoves(square) {
 		const toSquare = square.getAttribute('index120')
 		return this.validMoves.includes(parseInt(toSquare))
+	}
+
+	// Check if kingside castling is possible
+	canCastleKingside(colour) {
+		const emptySquares = colour === 'white' ? [96, 97] : [26, 27]
+		return this.castlingRights[colour].kingside && this.board.areSquaresEmpty(emptySquares) && !this.areSquaresUnderAttack(emptySquares, colour)
+	}
+
+	// Check if queenside castling is possible
+	canCastleQueenside(colour) {
+		const emptySquares = colour === 'white' ? [94, 93, 92] : [24, 23, 22]
+		return this.castlingRights[colour].queenside && this.board.areSquaresEmpty(emptySquares) && !this.areSquaresUnderAttack(emptySquares, colour)
+	}
+
+	// Check if the given squares are under attack
+	areSquaresUnderAttack(indices, colour) {
+		const opponentColour = colour === 'white' ? 'black' : 'white'
+		const allOpponentMoves = this.getAllMovesWithoutKing(opponentColour)
+		return indices.some((index) => allOpponentMoves.some((move) => move[1] === this.board.index120ToCoordinate(index)))
 	}
 }

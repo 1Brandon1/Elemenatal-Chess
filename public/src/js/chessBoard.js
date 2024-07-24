@@ -343,4 +343,9 @@ class Chessboard {
 		const piece = this.boardArray120[squareIndex]
 		return piece !== '' && piece.colour === colour
 	}
+
+	// Check if the given squares are empty
+	areSquaresEmpty(indices) {
+		return indices.every((index) => !this.isOccupied(index))
+	}
 }
