@@ -26,11 +26,11 @@ Welcome to Elemental Chess, a dynamic and innovative variant of the classic game
 ## Setup
 
 -   The new pieces are placed in specific positions, while the rest of the board is set up as in standard chess.
--   Suggested positions:
-    -   Fire Mage on c1 (White) and c8 (Black)
-    -   Water Mage on f1 (White) and f8 (Black)
+-   Positions:
+    -   Fire Mage on f1 (White) and f8 (Black)
+    -   Water Mage on h1 (White) and h8 (Black)
     -   Earth Golem on b1 (White) and b8 (Black)
-    -   Air Spirit on g1 (White) and g8 (Black)
+    -   Air Spirit on d1 (White) and d8 (Black)
 
 ## Rules
 

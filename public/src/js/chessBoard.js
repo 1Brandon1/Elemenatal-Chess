@@ -43,7 +43,7 @@ class Chessboard {
 
 	// Check if a given FEN string is valid
 	isFen(board) {
-		const boardPattern = /^[prnbqkPRNBQK1-8\/]+$/
+		const boardPattern = /^[prnbqkfweaPRNBQKFWEA1-8\/]+$/
 		if (!boardPattern.test(board)) return false // Invalid board position
 		const ranks = board.split('/')
 		if (ranks.length !== 8) return false // Invalid number of ranks
@@ -52,7 +52,7 @@ class Chessboard {
 			for (const char of rank) {
 				if (/[1-8]/.test(char)) {
 					squareCount += parseInt(char, 10)
-				} else if (/[prnbqkPRNBQK]/.test(char)) {
+				} else if (/[prnbqkfweaPRNBQKFWEA]/.test(char)) {
 					squareCount++
 				} else {
 					return false // Invalid character in rank

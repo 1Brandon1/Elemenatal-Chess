@@ -6,7 +6,8 @@ class Game {
 
 		// Default game settings
 		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		this.startPosition = 'r3k2r/8/8/8/8/8/8/R3K2R'
+		this.startPosition = 'rebakfnw/pppppppp/8/8/8/8/PPPPPPPP/REBAKFNW'
+
 		this.currentTurn = 'white'
 		this.gameOver = false
 		this.validMoves = []
@@ -183,7 +184,7 @@ class Game {
 			case 'k': return this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
 			case 'f': return this.getFireMoves(currentPosition, colour)
 			case 'w': return this.getWaterMoves(currentPosition, colour)
-			case 'e': return this.getEarthMoves(currentPosition, colour, [-21, -19, -12, -11, -9, -8, 8, 9, 11, 12, 19, 21])
+			case 'e': return this.getEarthMoves(currentPosition, colour)
 			case 'a': return this.getAirMoves(currentPosition, colour)
 			default: return [] 
 		}
@@ -272,29 +273,39 @@ class Game {
 
 	// Get valid moves for a Fire Mage
 	getFireMoves(currentPosition, colour) {
-		const pawnMoves = this.getPawnMoves(currentPosition, colour)
-		return pawnMoves.concat(this.getKingMoves(currentPosition, colour, [-1, 1]))
+		return this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11]).concat(
+			this.getKnightMoves(currentPosition, colour, [-20, -18, -2, 2, 18, 20, 22, -22])
+		)
 	}
 
 	// Get valid moves for a Water Mage
 	getWaterMoves(currentPosition, colour) {
-		return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21]).concat(
-			this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
+		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]).concat(
+			this.getKnightMoves(currentPosition, colour, [-20, -18, -2, 2, 18, 20, 22, -22])
 		)
 	}
 
 	// Get valid moves for a Earth Golem
 	getEarthMoves(currentPosition, colour) {
-		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]).concat(
-			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
-		)
+		return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21])
 	}
 
 	// Get valid moves for a Air Spirit
 	getAirMoves(currentPosition, colour) {
-		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]).concat(
-			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
-		)
+		const validMoves = []
+		const offsets = [-10, -1, 1, 10, -11, -9, 9, 11]
+		for (const offset of offsets) {
+			let newPosition = currentPosition
+			for (let i = 0; i < 3; i++) {
+				// Limit to 3 squares
+				newPosition += offset
+				if (!this.board.isBoardIndex(newPosition)) break
+				if (this.board.isOccupiedByAlly(newPosition, colour)) break
+				validMoves.push(newPosition)
+				if (this.board.isOccupiedByOpponent(newPosition, colour)) break
+			}
+		}
+		return validMoves
 	}
 
 	// Get all possible moves of the specified colour excluding king moves

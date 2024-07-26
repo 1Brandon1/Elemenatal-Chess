@@ -23,7 +23,7 @@ game.start()
 // 	}
 // }, 1000)
 
-game.board.place('f', 'a4')
-game.board.place('w', 'b4')
-game.board.place('e', 'c4')
-game.board.place('a', 'd4')
+// game.board.place('F', 'a4')
+// game.board.place('W', 'b4')
+// game.board.place('E', 'c4')
+// game.board.place('A', 'd4')
