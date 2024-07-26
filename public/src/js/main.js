@@ -1,8 +1,8 @@
 const game = new Game()
 game.start()
 
-const bot1 = new Bot(game, 'white')
-const bot2 = new Bot(game, 'black')
+// const bot1 = new Bot(game, 'white')
+// const bot2 = new Bot(game, 'black')
 
 // setInterval(() => {
 // 	if (game.currentTurn === bot2.colour && !game.gameOver) {
@@ -23,11 +23,7 @@ const bot2 = new Bot(game, 'black')
 // 	}
 // }, 1000)
 
-// game.board.place('s', 'd4')
-// game.board.place('c', 'c4')
-// game.board.place('d', 'e4')
-// game.board.place('w', 'f4')
-// game.board.place('A', 'g4')
-
-game.board.place('P', 'd7')
-game.board.place('p', 'd2')
+game.board.place('f', 'a4')
+game.board.place('w', 'b4')
+game.board.place('e', 'c4')
+game.board.place('a', 'd4')

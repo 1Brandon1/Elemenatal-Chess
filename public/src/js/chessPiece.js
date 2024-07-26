@@ -66,37 +66,30 @@ class King extends Piece {
 
 //!-------------- Special Pieces --------------
 
-// Squire piece class (upgraded pawn)
-class Squire extends Piece {
+// Fire Mage piece class
+class Fire extends Piece {
 	constructor(colour) {
-		super('specialPieces', colour, 's', 150)
+		super('specialPieces', colour, 'f', 600)
 	}
 }
 
-// Cardinal piece class (upgraded bishop)
-class Cardinal extends Piece {
+// Water Mage piece class
+class Water extends Piece {
 	constructor(colour) {
-		super('specialPieces', colour, 'c', 425)
+		super('specialPieces', colour, 'w', 800)
 	}
 }
 
-// Dragon piece class (upgraded knight)
-class Dragon extends Piece {
+// Earth Golem piece class
+class Earth extends Piece {
 	constructor(colour) {
-		super('specialPieces', colour, 'd', 425)
+		super('specialPieces', colour, 'e', 550)
 	}
 }
 
-// Warden piece class (upgraded rook)
-class Warden extends Piece {
+// Air Spirit piece class
+class Air extends Piece {
 	constructor(colour) {
-		super('specialPieces', colour, 'w', 700)
-	}
-}
-
-// Archon piece class (upgraded queen)
-class Archon extends Piece {
-	constructor(colour) {
-		super('specialPieces', colour, 'a', 1100)
+		super('specialPieces', colour, 'a', 900)
 	}
 }

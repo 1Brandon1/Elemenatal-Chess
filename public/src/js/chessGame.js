@@ -93,20 +93,6 @@ class Game {
 		this.undoneMoves = []
 	}
 
-	// Update castling rights based on the move
-	updateCastlingRights(fromCoord, piece) {
-		const pieceName = piece.name.toLowerCase()
-		const colour = piece.colour
-
-		if (pieceName === 'k') {
-			this.castlingRights[colour].kingside = false
-			this.castlingRights[colour].queenside = false
-		} else if (pieceName === 'r') {
-			if (fromCoord === 'a1' || fromCoord === 'a8') this.castlingRights[colour].queenside = false
-			if (fromCoord === 'h1' || fromCoord === 'h8') this.castlingRights[colour].kingside = false
-		}
-	}
-
 	//!-------------- Move Manegment Methods --------------
 
 	// Reset square selection and valid moves
@@ -148,6 +134,20 @@ class Game {
 		this.switchTurn()
 	}
 
+	// Update castling rights based on the move
+	updateCastlingRights(fromCoord, piece) {
+		const pieceName = piece.name.toLowerCase()
+		const colour = piece.colour
+
+		if (pieceName === 'k') {
+			this.castlingRights[colour].kingside = false
+			this.castlingRights[colour].queenside = false
+		} else if (pieceName === 'r') {
+			if (fromCoord === 'a1' || fromCoord === 'a8') this.castlingRights[colour].queenside = false
+			if (fromCoord === 'h1' || fromCoord === 'h8') this.castlingRights[colour].kingside = false
+		}
+	}
+
 	//!-------------- Move Conversion Methods --------------
 
 	// Convert move to a desription (eg. P from d2 to d4)
@@ -181,11 +181,10 @@ class Game {
 			case 'r': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10])
 			case 'q': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11])
 			case 'k': return this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
-			case 's': return this.getSquireMoves(currentPosition, colour)
-			case 'c': return this.getCardinalMoves(currentPosition, colour)
-			case 'd': return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -11, -9, -8, 8, 9, 11, 12, 19, 21])
-			case 'w': return this.getWardenMoves(currentPosition, colour)
-			case 'a': return this.getArchonMoves(currentPosition, colour) 
+			case 'f': return this.getFireMoves(currentPosition, colour)
+			case 'w': return this.getWaterMoves(currentPosition, colour)
+			case 'e': return this.getEarthMoves(currentPosition, colour, [-21, -19, -12, -11, -9, -8, 8, 9, 11, 12, 19, 21])
+			case 'a': return this.getAirMoves(currentPosition, colour)
 			default: return [] 
 		}
 	}
@@ -212,12 +211,8 @@ class Game {
 		}
 
 		// Add castling moves
-		if (this.canCastleKingside(colour)) {
-			validMoves.push(currentPosition + 2) // Kingside castling
-		}
-		if (this.canCastleQueenside(colour)) {
-			validMoves.push(currentPosition - 3) // Queenside castling
-		}
+		if (this.canCastleKingside(colour)) validMoves.push(currentPosition + 2)
+		if (this.canCastleQueenside(colour)) validMoves.push(currentPosition - 3)
 
 		return validMoves
 	}
@@ -275,6 +270,33 @@ class Game {
 		return validMoves
 	}
 
+	// Get valid moves for a Fire Mage
+	getFireMoves(currentPosition, colour) {
+		const pawnMoves = this.getPawnMoves(currentPosition, colour)
+		return pawnMoves.concat(this.getKingMoves(currentPosition, colour, [-1, 1]))
+	}
+
+	// Get valid moves for a Water Mage
+	getWaterMoves(currentPosition, colour) {
+		return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21]).concat(
+			this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
+		)
+	}
+
+	// Get valid moves for a Earth Golem
+	getEarthMoves(currentPosition, colour) {
+		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]).concat(
+			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
+		)
+	}
+
+	// Get valid moves for a Air Spirit
+	getAirMoves(currentPosition, colour) {
+		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]).concat(
+			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
+		)
+	}
+
 	// Get all possible moves of the specified colour excluding king moves
 	getAllMovesWithoutKing(colour) {
 		const allMoves = []
@@ -289,33 +311,6 @@ class Game {
 			}
 		}
 		return allMoves
-	}
-
-	// Get valid moves for a squire
-	getSquireMoves(currentPosition, colour) {
-		const pawnMoves = this.getPawnMoves(currentPosition, colour)
-		return pawnMoves.concat(this.getKingMoves(currentPosition, colour, [-1, 1]))
-	}
-
-	// Get valid moves for a cardinal
-	getCardinalMoves(currentPosition, colour) {
-		return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21]).concat(
-			this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
-		)
-	}
-
-	// Get valid moves for a warden
-	getWardenMoves(currentPosition, colour) {
-		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]).concat(
-			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
-		)
-	}
-
-	// Get valid moves for a archon
-	getArchonMoves(currentPosition, colour) {
-		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]).concat(
-			this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
-		)
 	}
 
 	// Get all possible moves of the specified colour
