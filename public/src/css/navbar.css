@@ -61,7 +61,7 @@
 	color: var(--text-secondary);
 	background: var(--bg-secondary);
 	font-size: 1.5rem;
-	letter-spacing: 0.3ch;
+	letter-spacing: 0.1ch;
 	width: 100%;
 }
 
@@ -79,7 +79,7 @@
 }
 
 .navbar:hover .logo svg {
-	transform: rotate(-180deg);
+	transform: rotate(360deg);
 }
 
 /* !---------- Media Queries ---------- */
