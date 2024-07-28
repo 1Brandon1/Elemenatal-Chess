@@ -55,29 +55,46 @@ class Game {
 	// Actions on first click
 	onFirstClick(square) {
 		this.selectedSquare = square
-		const squareCoord = this.selectedSquare.getAttribute('coordinate')
+		const squareCoord = square.getAttribute('coordinate')
 		const piece = this.board.getSquarePieceObj(squareCoord)
-		if (!this.isPiecesTurn(this.selectedSquare)) return
-		const squareIndex = parseInt(this.selectedSquare.getAttribute('index120'))
+		if (!this.isPiecesTurn(square)) return
+		const squareIndex = parseInt(square.getAttribute('index120'))
 		this.validMoves = this.getValidMoves(piece, squareIndex)
 		this.board.highlightSquares(this.validMoves)
-		this.selectedSquare.classList.add('clickedSquare')
+		square.classList.add('clickedSquare')
 	}
 
 	// Actions on second click
 	onSecondClick(square) {
-		if (!this.isPiecesTurn(this.selectedSquare) || !this.isMoveInValidMoves(square)) return
+		if (!this.isMoveInValidMoves(square)) return
 		const fromCoord = this.selectedSquare.getAttribute('coordinate')
 		const toCoord = square.getAttribute('coordinate')
 		const piece = this.board.getSquarePieceObj(fromCoord)
+
+		this.makeMove(fromCoord, toCoord, piece)
+		this.resetSquareSelection()
+
+		if (this.isCheckmate(this.getOpponentColour())) {
+			this.gameOver = true
+			console.log('Checkmate!')
+		} else if (this.isKingInCheck(this.getOpponentColour())) {
+			console.log('Check!')
+		}
+
+		this.switchTurn()
+		this.undoneMoves = []
+	}
+
+	// Make a move
+	makeMove(fromCoord, toCoord, piece) {
 		let capturedPiece = null
 		let capturedCoord = null
 
 		if (this.isEnPassant(toCoord, piece)) {
 			const dir = piece.name === piece.name.toUpperCase() ? -1 : 1
-			const enPassentCoord = this.board.index120ToCoordinate(this.board.enPassantIndex - 10 * dir)
-			capturedPiece = this.getCapturedPiece(enPassentCoord)
-			capturedCoord = enPassentCoord
+			const enPassantCoord = this.board.index120ToCoordinate(this.board.enPassantIndex - 10 * dir)
+			capturedPiece = this.getCapturedPiece(enPassantCoord)
+			capturedCoord = enPassantCoord
 			this.board.enPassant(fromCoord, toCoord)
 		} else {
 			capturedPiece = this.getCapturedPiece(toCoord)
@@ -87,22 +104,10 @@ class Game {
 		}
 
 		this.updateCastlingRights(fromCoord, piece)
-		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece, capturedCoord: capturedCoord }
-		this.movesHistory.push(move)
-		this.resetSquareSelection()
-
-		if (this.isCheckmate(this.currentTurn === 'white' ? 'black' : 'white')) {
-			this.gameOver = true
-			console.log('Checkmate!')
-		} else if (this.isKingInCheck(this.currentTurn === 'white' ? 'black' : 'white')) {
-			console.log('Check!')
-		}
-
-		this.switchTurn()
-		this.undoneMoves = []
+		this.movesHistory.push({ piece: piece.name, fromCoord, toCoord, capturedPiece, capturedCoord })
 	}
 
-	//!-------------- Move Manegment Methods --------------
+	//!-------------- Move Management Methods --------------
 
 	// Reset square selection and valid moves
 	resetSquareSelection() {
@@ -115,17 +120,19 @@ class Game {
 
 	// Switch turn between players
 	switchTurn() {
-		this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white'
+		this.currentTurn = this.getOpponentColour()
 		console.log(this.printMoveHistory())
+	}
+
+	// Get opponent colour
+	getOpponentColour() {
+		return this.currentTurn === 'white' ? 'black' : 'white'
 	}
 
 	undo() {
 		if (this.movesHistory.length === 0) return
 		const lastMove = this.movesHistory.pop()
-		const fromCoord = lastMove.fromCoord
-		const toCoord = lastMove.toCoord
-		const capturedPiece = lastMove.capturedPiece
-		const capturedCoord = lastMove.capturedCoord
+		const { fromCoord, toCoord, capturedPiece, capturedCoord } = lastMove
 		this.board.move(toCoord, fromCoord)
 		if (capturedPiece) this.board.place(capturedPiece, capturedCoord)
 		this.switchTurn()
@@ -136,8 +143,7 @@ class Game {
 	redo() {
 		if (this.undoneMoves.length === 0) return
 		const lastUndoneMove = this.undoneMoves.pop()
-		const fromCoord = lastUndoneMove.fromCoord
-		const toCoord = lastUndoneMove.toCoord
+		const { fromCoord, toCoord } = lastUndoneMove
 		this.board.move(fromCoord, toCoord)
 		this.movesHistory.push(lastUndoneMove)
 		this.switchTurn()
@@ -159,7 +165,7 @@ class Game {
 
 	//!-------------- Move Conversion Methods --------------
 
-	// Convert move to a desription (eg. P from d2 to d4)
+	// Convert move to a description (eg. P from d2 to d4)
 	moveToString(move) {
 		let moveString = `${move.piece} from ${move.fromCoord} to ${move.toCoord}`
 		if (move.capturedPiece) moveString += `, capturing ${move.capturedPiece}`
@@ -187,82 +193,61 @@ class Game {
 		// prettier-ignore
 		// Calculate possible moves based on piece type
 		switch (pieceType) {
-            case 'p': moves = this.getPawnMoves(currentPosition, colour); break
-            case 'n': moves = this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21]); break
-            case 'b': moves = this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11]); break
-            case 'r': moves = this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]); break
-            case 'q': moves = this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]); break
-            case 'k': moves = this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11]); break
-            case 'f': moves = this.getFireMoves(currentPosition, colour); break
-            case 'w': moves = this.getWaterMoves(currentPosition, colour); break
-            case 'e': moves = this.getEarthMoves(currentPosition, colour); break
-            case 'a': moves = this.getAirMoves(currentPosition, colour); break
-            default: moves = []
-        }
+			case 'p': moves = this.getPawnMoves(currentPosition, colour); break
+			case 'n': moves = this.getKnightMoves(currentPosition, colour); break
+			case 'b': moves = this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11]); break
+			case 'r': moves = this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]); break
+			case 'q': moves = this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]); break
+			case 'k': moves = this.getKingMoves(currentPosition, colour); break
+			case 'f': moves = this.getFireMoves(currentPosition, colour); break
+			case 'w': moves = this.getWaterMoves(currentPosition, colour); break
+			case 'e': moves = this.getEarthMoves(currentPosition, colour); break
+			case 'a': moves = this.getAirMoves(currentPosition, colour); break
+			default:moves = []
+		}
 
 		// Filter moves that leave the king in check
 		return moves.filter((move) => this.isMoveSafe(currentPosition, move))
 	}
 
-	// Get valid moves for a knight and other pieces with similar movement
-	getKnightMoves(currentPosition, colour, offsets) {
-		const validMoves = []
-		for (let offset of offsets) {
-			const newPosition = currentPosition + offset
-			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
-				validMoves.push(newPosition)
-			}
-		}
-		return validMoves
+	// Get valid moves for a knight
+	getKnightMoves(currentPosition, colour) {
+		return this.getMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21], false)
 	}
 
 	// Get valid moves for a king
-	getKingMoves(currentPosition, colour, offsets) {
-		const validMoves = []
-		for (let offset of offsets) {
-			const newPosition = currentPosition + offset
-			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
-				validMoves.push(newPosition)
-			}
-		}
-
-		// Add castling moves
-		if (this.canCastleKingside(colour)) validMoves.push(currentPosition + 2)
-		if (this.canCastleQueenside(colour)) validMoves.push(currentPosition - 3)
-
-		return validMoves
+	getKingMoves(currentPosition, colour) {
+		const moves = this.getMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11], false)
+		if (this.canCastleKingside(colour)) moves.push(currentPosition + 2)
+		if (this.canCastleQueenside(colour)) moves.push(currentPosition - 3)
+		return moves
 	}
 
 	// Get valid moves for a pawn
 	getPawnMoves(currentPosition, colour) {
 		const dir = colour === 'white' ? -1 : 1
-		const startingRank = colour === 'white' ? 8 : 3
+		const startRank = colour === 'white' ? 8 : 3
 		const offsets = [10 * dir]
 		const validMoves = []
 
-		// If the pawn is on its starting rank, it can move forward two squares
 		if (
-			Math.floor(currentPosition / 10) === startingRank &&
+			Math.floor(currentPosition / 10) === startRank &&
 			!this.board.isOccupied(currentPosition + 10 * dir) &&
 			!this.board.isOccupied(currentPosition + 20 * dir)
 		) {
 			offsets.push(20 * dir)
 		}
 
-		// Check diagonal capture moves and en passant
 		const captureOffsets = [9 * dir, 11 * dir]
 		for (let offset of captureOffsets) {
 			let newPosition = currentPosition + offset
 			if (this.board.isBoardIndex(newPosition)) {
-				if (this.board.isOccupiedByOpponent(newPosition, colour)) {
-					validMoves.push(newPosition)
-				} else if (newPosition === this.board.enPassantIndex) {
+				if (this.board.isOccupiedByOpponent(newPosition, colour) || newPosition === this.board.enPassantIndex) {
 					validMoves.push(newPosition)
 				}
 			}
 		}
 
-		// Check forward moves
 		for (let offset of offsets) {
 			let newPosition = currentPosition + offset
 			if (this.board.isBoardIndex(newPosition) && !this.board.isOccupied(newPosition)) {
@@ -274,12 +259,17 @@ class Game {
 
 	// Get valid sliding moves (bishop, rook, queen)
 	getSlidingMoves(currentPosition, colour, offsets) {
+		return this.getMoves(currentPosition, colour, offsets, true)
+	}
+
+	// Get moves for different pieces
+	getMoves(currentPosition, colour, offsets, sliding) {
 		const validMoves = []
 		for (let offset of offsets) {
 			let newPosition = currentPosition + offset
 			while (this.board.isBoardIndex(newPosition) && !this.board.isOccupiedByAlly(newPosition, colour)) {
 				validMoves.push(newPosition)
-				if (this.board.isOccupiedByOpponent(newPosition, colour)) break
+				if (this.board.isOccupiedByOpponent(newPosition, colour) || !sliding) break
 				newPosition += offset
 			}
 		}
@@ -288,24 +278,20 @@ class Game {
 
 	// Get valid moves for a Fire Mage
 	getFireMoves(currentPosition, colour) {
-		return this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11]).concat(
-			this.getKnightMoves(currentPosition, colour, [-20, -18, -2, 2, 18, 20, 22, -22])
-		)
+		return this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11]).concat(this.getKnightMoves(currentPosition, colour))
 	}
 
 	// Get valid moves for a Water Mage
 	getWaterMoves(currentPosition, colour) {
-		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]).concat(
-			this.getKnightMoves(currentPosition, colour, [-20, -18, -2, 2, 18, 20, 22, -22])
-		)
+		return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]).concat(this.getKnightMoves(currentPosition, colour))
 	}
 
-	// Get valid moves for a Earth Golem
+	// Get valid moves for an Earth Golem
 	getEarthMoves(currentPosition, colour) {
-		return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21])
+		return this.getMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21], false)
 	}
 
-	// Get valid moves for a Air Spirit
+	// Get valid moves for an Air Spirit
 	getAirMoves(currentPosition, colour) {
 		const validMoves = []
 		const offsets = [-10, -1, 1, 10, -11, -9, 9, 11]
@@ -314,8 +300,7 @@ class Game {
 			for (let i = 0; i < 3; i++) {
 				// Limit to 3 squares
 				newPosition += offset
-				if (!this.board.isBoardIndex(newPosition)) break
-				if (this.board.isOccupiedByAlly(newPosition, colour)) break
+				if (!this.board.isBoardIndex(newPosition) || this.board.isOccupiedByAlly(newPosition, colour)) break
 				validMoves.push(newPosition)
 				if (this.board.isOccupiedByOpponent(newPosition, colour)) break
 			}
@@ -344,11 +329,7 @@ class Game {
 		if (this.movesHistory.length === 0) {
 			return 'No moves have been made yet.'
 		} else {
-			let historyString = 'Move History:\n'
-			this.movesHistory.forEach((move, index) => {
-				historyString += `${index + 1}. ${this.moveToChessNotation(move)} (${this.moveToString(move)})\n`
-			})
-			return historyString
+			return this.movesHistory.map((move, index) => `${index + 1}. ${this.moveToChessNotation(move)} (${this.moveToString(move)})`).join('\n')
 		}
 	}
 
@@ -359,10 +340,7 @@ class Game {
 	}
 
 	isEnPassant(toCoord, piece) {
-		return (
-			this.board.coordinateToIndex120(toCoord) === this.board.enPassantIndex &&
-			(piece.name.toLowerCase() === 'p' || piece.name.toLowerCase() === 's')
-		)
+		return this.board.coordinateToIndex120(toCoord) === this.board.enPassantIndex && piece.name.toLowerCase() === 'p'
 	}
 
 	isPromotion(piece, toCoord) {
@@ -419,23 +397,19 @@ class Game {
 	}
 
 	isMoveSafe(from, to) {
-		// Clone the board state
 		const tempBoard = [...this.board.boardArray120]
 		const pieceToMove = tempBoard[from]
 		const kingColour = pieceToMove.colour
 
-		// Make the move on the temporary board
 		tempBoard[to] = pieceToMove
 		tempBoard[from] = ''
 
-		// Create a temporary board instance with the new state
 		const tempBoardInstance = new Chessboard(this)
 		tempBoardInstance.boardArray120 = tempBoard
 
 		const opponentColour = kingColour === 'white' ? 'black' : 'white'
 		const kingIndex = tempBoardInstance.findKingIndex(kingColour)
 
-		// Check if the king is under attack
 		return !tempBoardInstance.isSquareUnderAttack(kingIndex, opponentColour)
 	}
 }

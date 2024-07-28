@@ -34,19 +34,29 @@ class Chessboard {
 		this.orientation = 'white' // Default orientation
 		this.game = game // Reference to the game instance
 		this.enPassantIndex = null // En Passant target square
-		this.moveSound = new Audio('/assets/sounds/move.mp3')
-		this.captureSound = new Audio('/assets/sounds/capture.mp3')
-		this.castleSound = new Audio('/assets/sounds/castle.mp3')
-		this.checkSound = new Audio('/assets/sounds/check.mp3')
-		this.promoteSound = new Audio('/assets/sounds/promote.mp3')
+
+		this.initSounds()
+	}
+
+	// Initialize sound effects
+	initSounds() {
+		this.sounds = {
+			move: new Audio('/assets/sounds/move.mp3'),
+			capture: new Audio('/assets/sounds/capture.mp3'),
+			castle: new Audio('/assets/sounds/castle.mp3'),
+			check: new Audio('/assets/sounds/check.mp3'),
+			promote: new Audio('/assets/sounds/promote.mp3')
+		}
 	}
 
 	// Check if a given FEN string is valid
 	isFen(board) {
 		const boardPattern = /^[prnbqkfweaPRNBQKFWEA1-8\/]+$/
 		if (!boardPattern.test(board)) return false // Invalid board position
+
 		const ranks = board.split('/')
 		if (ranks.length !== 8) return false // Invalid number of ranks
+
 		for (const rank of ranks) {
 			let squareCount = 0
 			for (const char of rank) {
@@ -94,20 +104,26 @@ class Chessboard {
 
 		boardArray.forEach((pieceCode, squareIndex) => {
 			const index120 = Chessboard.MAILBOX_64[squareIndex]
-			const square = document.createElement('div')
-			square.className = `square ${((squareIndex % 8) + Math.floor(squareIndex / 8)) % 2 === 1 ? 'darkSquare' : 'lightSquare'}`
-			square.setAttribute('coordinate', this.index120ToCoordinate(index120))
-			square.setAttribute('index120', index120)
-
-			const piece = pieceCode ? this.createPiece(pieceCode) : ''
-			square.innerHTML = piece ? piece.getPieceHtml() : ''
-			square.addEventListener('click', (event) => this.game.squareClicked(event))
-
-			this.boardArray120[index120] = piece
+			const square = this.createSquare(pieceCode, index120, squareIndex)
 			fragment.appendChild(square)
 		})
 
 		this.boardElement.appendChild(fragment) // Append all squares at once
+	}
+
+	// Create a square element
+	createSquare(pieceCode, index120, squareIndex) {
+		const square = document.createElement('div')
+		square.className = `square ${((squareIndex % 8) + Math.floor(squareIndex / 8)) % 2 === 1 ? 'darkSquare' : 'lightSquare'}`
+		square.setAttribute('coordinate', this.index120ToCoordinate(index120))
+		square.setAttribute('index120', index120)
+
+		const piece = pieceCode ? this.createPiece(pieceCode) : ''
+		square.innerHTML = piece ? piece.getPieceHtml() : ''
+		square.addEventListener('click', (event) => this.game.squareClicked(event))
+
+		this.boardArray120[index120] = piece
+		return square
 	}
 
 	// Clear the board's HTML
@@ -166,10 +182,10 @@ class Chessboard {
 
 		const existingPiece = toSquare.querySelector('.piece')
 		if (existingPiece) {
-			this.captureSound.play()
+			this.sounds.capture.play()
 			toSquare.removeChild(existingPiece)
 		} else {
-			this.moveSound.play()
+			this.sounds.move.play()
 		}
 
 		toSquare.appendChild(pieceToMove)
@@ -203,7 +219,7 @@ class Chessboard {
 			this.boardArray120[rookToIndex] = this.boardArray120[rookFromIndex]
 			this.boardArray120[rookFromIndex] = ''
 
-			this.castleSound.play()
+			this.sounds.castle.play()
 		}
 	}
 
@@ -363,6 +379,7 @@ class Chessboard {
 		return indices.every((index) => !this.isOccupied(index))
 	}
 
+	// Check if a square is under attack by the opponent
 	isSquareUnderAttack(squareIndex, opponentColour) {
 		const pieceOffsets = {
 			p: [10, 20], // Pawn

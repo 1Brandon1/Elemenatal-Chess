@@ -5,7 +5,6 @@ class Piece {
 		this.name = colour === 'white' ? name.toUpperCase() : name.toLowerCase()
 		this.colour = colour
 		this.value = value
-		this.piecesTaken = 0
 		this.pieceHtml = null
 	}
 
