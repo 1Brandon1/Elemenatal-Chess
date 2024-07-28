@@ -340,11 +340,6 @@ class Chessboard {
 		return squareIndex >= 21 && squareIndex <= 98 && squareIndex % 10 !== 0 && (squareIndex + 1) % 10 !== 0
 	}
 
-	// Check if a square is occupied
-	isOccupied(squareIndex) {
-		return this.boardArray120[squareIndex] !== ''
-	}
-
 	// Check if a square is occupied by an opponent's piece
 	isOccupiedByOpponent(squareIndex, colour) {
 		const piece = this.boardArray120[squareIndex]
@@ -358,8 +353,67 @@ class Chessboard {
 		return piece !== '' && piece.colour === colour
 	}
 
+	// Check if a square is occupied
+	isOccupied(squareIndex) {
+		return this.boardArray120[squareIndex] !== ''
+	}
+
 	// Check if the given squares are empty
 	areSquaresEmpty(indices) {
 		return indices.every((index) => !this.isOccupied(index))
+	}
+
+	isSquareUnderAttack(squareIndex, opponentColour) {
+		const pieceOffsets = {
+			p: [10, 20], // Pawn
+			n: [-21, -19, -12, -8, 8, 12, 19, 21], // Knight
+			b: [-11, -9, 9, 11], // Bishop
+			r: [-10, -1, 1, 10], // Rook
+			q: [-10, -1, 1, 10, -11, -9, 9, 11], // Queen
+			k: [-11, -10, -9, -1, 1, 9, 10, 11] // King
+		}
+
+		// Helper function to check if a square is attacked by a specific piece type
+		const isAttackedByPiece = (offsets, pieceType) => {
+			for (const offset of offsets) {
+				let index = squareIndex + offset
+				while (this.isBoardIndex(index)) {
+					const piece = this.boardArray120[index]
+					if (piece) {
+						if (piece.colour === opponentColour && piece.name.toLowerCase() === pieceType) {
+							return true
+						}
+						if (piece.name.toLowerCase() !== pieceType) break
+					}
+					if (pieceType === 'n' || pieceType === 'k') break // Knights and kings don't slide
+					index += offset
+				}
+			}
+			return false
+		}
+
+		// Check pawn attacks
+		const pawnOffsets = opponentColour === 'white' ? [11, 9] : [-11, -9]
+		if (
+			pawnOffsets.some((offset) => {
+				const index = squareIndex + offset
+				return this.isBoardIndex(index) && this.isOccupiedByOpponent(index, opponentColour === 'white' ? 'black' : 'white')
+			})
+		) {
+			return true
+		}
+
+		// Check for knights
+		if (isAttackedByPiece(pieceOffsets.n, 'n')) return true
+
+		// Check for bishops, rooks, and queens
+		if (isAttackedByPiece(pieceOffsets.b, 'b') || isAttackedByPiece(pieceOffsets.r, 'r') || isAttackedByPiece(pieceOffsets.q, 'q')) {
+			return true
+		}
+
+		// Check for kings (king attacks are immediate)
+		if (isAttackedByPiece(pieceOffsets.k, 'k')) return true
+
+		return false
 	}
 }

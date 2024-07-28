@@ -5,8 +5,8 @@ class Game {
 		this.state = this.board.boardArray120
 
 		// Default game settings
-		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		this.startPosition = 'rebakfnw/pppppppp/8/8/8/8/PPPPPPPP/REBAKFNW'
+		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		// this.startPosition = 'rebakfnw/pppppppp/8/8/8/8/PPPPPPPP/REBAKFNW'
 
 		this.currentTurn = 'white'
 		this.gameOver = false
@@ -90,6 +90,14 @@ class Game {
 		const move = { piece: piece.name, fromCoord: fromCoord, toCoord: toCoord, capturedPiece: capturedPiece, capturedCoord: capturedCoord }
 		this.movesHistory.push(move)
 		this.resetSquareSelection()
+
+		if (this.isCheckmate(this.currentTurn === 'white' ? 'black' : 'white')) {
+			this.gameOver = true
+			console.log('Checkmate!')
+		} else if (this.isKingInCheck(this.currentTurn === 'white' ? 'black' : 'white')) {
+			console.log('Check!')
+		}
+
 		this.switchTurn()
 		this.undoneMoves = []
 	}
@@ -174,21 +182,28 @@ class Game {
 	getValidMoves(piece, currentPosition) {
 		const colour = piece.colour
 		const pieceType = piece.name.toLowerCase()
+		let moves = []
+
 		// prettier-ignore
+		// Calculate possible moves based on piece type
 		switch (pieceType) {
-			case 'p': return this.getPawnMoves(currentPosition, colour)
-			case 'n': return this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21])
-			case 'b': return this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11])
-			case 'r': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10])
-			case 'q': return this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11])
-			case 'k': return this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11])
-			case 'f': return this.getFireMoves(currentPosition, colour)
-			case 'w': return this.getWaterMoves(currentPosition, colour)
-			case 'e': return this.getEarthMoves(currentPosition, colour)
-			case 'a': return this.getAirMoves(currentPosition, colour)
-			default: return [] 
-		}
+            case 'p': moves = this.getPawnMoves(currentPosition, colour); break
+            case 'n': moves = this.getKnightMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21]); break
+            case 'b': moves = this.getSlidingMoves(currentPosition, colour, [-11, -9, 9, 11]); break
+            case 'r': moves = this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10]); break
+            case 'q': moves = this.getSlidingMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11]); break
+            case 'k': moves = this.getKingMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11]); break
+            case 'f': moves = this.getFireMoves(currentPosition, colour); break
+            case 'w': moves = this.getWaterMoves(currentPosition, colour); break
+            case 'e': moves = this.getEarthMoves(currentPosition, colour); break
+            case 'a': moves = this.getAirMoves(currentPosition, colour); break
+            default: moves = []
+        }
+
+		// Filter moves that leave the king in check
+		return moves.filter((move) => this.isMoveSafe(currentPosition, move))
 	}
+
 	// Get valid moves for a knight and other pieces with similar movement
 	getKnightMoves(currentPosition, colour, offsets) {
 		const validMoves = []
@@ -308,22 +323,6 @@ class Game {
 		return validMoves
 	}
 
-	// Get all possible moves of the specified colour excluding king moves
-	getAllMovesWithoutKing(colour) {
-		const allMoves = []
-		for (let i = 21; i <= 98; i++) {
-			if (this.board.isOccupiedByAlly(i, colour)) {
-				const fromcoord = this.board.index120ToCoordinate(i)
-				const piece = this.board.getSquarePieceObj(fromcoord)
-				if (piece.name.toLowerCase() !== 'k') {
-					const validMoves = this.getValidMoves(piece, i)
-					allMoves.push(...validMoves.map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
-				}
-			}
-		}
-		return allMoves
-	}
-
 	// Get all possible moves of the specified colour
 	getAllMoves(colour) {
 		const allMoves = []
@@ -397,7 +396,46 @@ class Game {
 	// Check if the given squares are under attack
 	areSquaresUnderAttack(indices, colour) {
 		const opponentColour = colour === 'white' ? 'black' : 'white'
-		const allOpponentMoves = this.getAllMovesWithoutKing(opponentColour)
-		return indices.some((index) => allOpponentMoves.some((move) => move[1] === this.board.index120ToCoordinate(index)))
+		return indices.some((index) => this.board.isSquareUnderAttack(index, opponentColour))
+	}
+
+	// Check if the king of the given colour is in check
+	isKingInCheck(colour) {
+		const kingIndex = this.board.findKingIndex(colour)
+		return this.board.isSquareUnderAttack(kingIndex, colour === 'white' ? 'black' : 'white')
+	}
+
+	// Check if the king of the given colour is in checkmate
+	isCheckmate(colour) {
+		if (!this.isKingInCheck(colour)) return false
+		for (let i = 21; i <= 98; i++) {
+			if (this.board.isOccupiedByAlly(i, colour)) {
+				const piece = this.board.getSquarePieceObj(this.board.index120ToCoordinate(i))
+				const validMoves = this.getValidMoves(piece, i)
+				if (validMoves.length > 0) return false
+			}
+		}
+		return true
+	}
+
+	isMoveSafe(from, to) {
+		// Clone the board state
+		const tempBoard = [...this.board.boardArray120]
+		const pieceToMove = tempBoard[from]
+		const kingColour = pieceToMove.colour
+
+		// Make the move on the temporary board
+		tempBoard[to] = pieceToMove
+		tempBoard[from] = ''
+
+		// Create a temporary board instance with the new state
+		const tempBoardInstance = new Chessboard(this)
+		tempBoardInstance.boardArray120 = tempBoard
+
+		const opponentColour = kingColour === 'white' ? 'black' : 'white'
+		const kingIndex = tempBoardInstance.findKingIndex(kingColour)
+
+		// Check if the king is under attack
+		return !tempBoardInstance.isSquareUnderAttack(kingIndex, opponentColour)
 	}
 }
