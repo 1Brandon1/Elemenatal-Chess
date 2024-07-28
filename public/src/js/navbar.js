@@ -1,9 +1,10 @@
 const themeMap = {
 	dark: 'light',
-	light: 'ocean',
-	ocean: 'magic',
-	magic: 'wood',
-	wood: 'dark'
+	light: 'earth',
+	earth: 'fire',
+	fire: 'water',
+	water: 'air',
+	air: 'dark'
 }
 
 // Retrieve current theme from localStorage or set default
@@ -22,7 +23,7 @@ document.getElementById('themeButton').addEventListener('click', toggleTheme)
 
 //!-------------- Theme Management --------------
 
-// Toggle theme between light, dark, magic, ocean, forest, and desert
+// Toggle theme between dark, light, earth, fire, water, and air
 function toggleTheme() {
 	const current = localStorage.getItem('theme') || Object.keys(themeMap)[0]
 	const next = themeMap[current]

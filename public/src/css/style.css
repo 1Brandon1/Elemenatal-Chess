@@ -48,31 +48,40 @@ main {
 	--board-light: #f0d9b5;
 }
 
-.magic {
-	--text-primary: #ffffff;
-	--text-secondary: #ffd700;
-	--bg-primary: #1f1a33;
-	--bg-secondary: #291c4b;
-	--board-dark: #5a4c7a;
-	--board-light: #d1bfff;
+.earth {
+	--text-primary: #2c3e50;
+	--text-secondary: #1a242f;
+	--bg-primary: #d0f0c0;
+	--bg-secondary: #a9d9a5;
+	--board-dark: #4a773c;
+	--board-light: #8abf8b;
 }
 
-.ocean {
-	--text-primary: #ffffff;
-	--text-secondary: #d3e0ea;
-	--bg-primary: #2e3b44;
-	--bg-secondary: #1f2930;
-	--board-dark: #5497a7;
-	--board-light: #a4c9d2;
+.fire {
+	--text-primary: #4d0000;
+	--text-secondary: #2e0000;
+	--bg-primary: #ffcccc;
+	--bg-secondary: #ff9999;
+	--board-dark: #cc0000;
+	--board-light: #ff6666;
 }
 
-.wood {
-	--text-primary: #ffffff;
-	--text-secondary: #d7c3a5;
-	--bg-primary: #b0846a;
-	--bg-secondary: #7a4e38;
-	--board-dark: #bead92;
-	--board-light: #e5d3b8;
+.water {
+	--text-primary: #003366;
+	--text-secondary: #002244;
+	--bg-primary: #cceeff;
+	--bg-secondary: #99ccff;
+	--board-dark: #006699;
+	--board-light: #66b3ff;
+}
+
+.air {
+	--text-primary: #2c3e50;
+	--text-secondary: #1a242f;
+	--bg-primary: #f0f4f8;
+	--bg-secondary: #e1e8ee;
+	--board-dark: #b0bec5;
+	--board-light: #cfd8dc;
 }
 
 .theme-icon {
@@ -81,10 +90,10 @@ main {
 
 .light #lightIcon,
 .dark #darkIcon,
-.magic #magicIcon,
-.ocean #oceanIcon,
-.wood #woodIcon,
-.desert #desertIcon {
+.earth #earthIcon,
+.fire #fireIcon,
+.water #waterIcon,
+.air #airIcon {
 	display: block;
 }
 
