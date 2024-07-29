@@ -5,21 +5,21 @@ game.start()
 // const bot2 = new Bot(game, 'black')
 
 // setInterval(() => {
-// 	if (game.currentTurn === bot2.colour && !game.gameOver) {
+// 	if (game.activePlayer === bot2.colour && !game.gameOver) {
 // 		bot2.makeRandomMove()
-// 		game.switchTurn()
+// 		game.toggleTurn()
 // 	}
 // }, 1000)
 
 // setInterval(() => {
-// 	if (game.currentTurn === bot1.colour && !game.gameOver) {
+// 	if (game.activePlayer === bot1.colour && !game.gameOver) {
 // 		bot1.makeRandomMove()
-// 		game.switchTurn()
+// 		game.toggleTurn()
 // 	}
 
-// 	if (game.currentTurn === bot2.colour && !game.gameOver) {
+// 	if (game.activePlayer === bot2.colour && !game.gameOver) {
 // 		bot2.makeRandomMove()
-// 		game.switchTurn()
+// 		game.toggleTurn()
 // 	}
 // }, 1000)
 

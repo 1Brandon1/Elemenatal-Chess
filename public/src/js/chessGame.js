@@ -90,6 +90,8 @@ class Game {
 	executeMove(fromCoord, toCoord, piece) {
 		let capturedPiece = null
 		let capturedCoord = null
+		let moveType = 'normal'
+		const castlingRightsBefore = JSON.parse(JSON.stringify(this.castlingRights)) // Save castling rights before the move
 
 		if (this.isEnPassantMove(toCoord, piece)) {
 			const dir = piece.name === piece.name.toUpperCase() ? -1 : 1
@@ -97,23 +99,51 @@ class Game {
 			capturedPiece = this.retrieveCapturedPiece(enPassantCoord)
 			capturedCoord = enPassantCoord
 			this.board.enPassant(fromCoord, toCoord)
+			moveType = 'enPassant'
+		} else if (this.isCastleMove(fromCoord, toCoord, piece)) {
+			this.board.castle(fromCoord, toCoord)
+			moveType = 'castle'
 		} else {
 			capturedPiece = this.retrieveCapturedPiece(toCoord)
 			if (capturedPiece) capturedCoord = toCoord
 			this.board.move(fromCoord, toCoord)
-			if (this.isPawnPromotion(piece, toCoord)) this.board.promote(toCoord, piece.colour)
+			if (this.isPawnPromotion(piece, toCoord)) {
+				this.board.promote(toCoord, piece.colour)
+				moveType = 'promotion'
+			}
 		}
 
+		this.moveHistory.push({ piece: piece.name, fromCoord, toCoord, capturedPiece, capturedCoord, moveType, castlingRightsBefore }) // Save castling rights with the move
 		this.checkCastlingRights(fromCoord, piece)
-		this.moveHistory.push({ piece: piece.name, fromCoord, toCoord, capturedPiece, capturedCoord })
 	}
 
 	undoMove() {
 		if (this.moveHistory.length === 0) return
 		const lastMove = this.moveHistory.pop()
-		const { fromCoord, toCoord, capturedPiece, capturedCoord } = lastMove
-		this.board.move(toCoord, fromCoord)
-		if (capturedPiece) this.board.place(capturedPiece, capturedCoord)
+		const { fromCoord, toCoord, capturedPiece, capturedCoord, moveType, piece, castlingRightsBefore } = lastMove // Retrieve saved castling rights
+		switch (moveType) {
+			case 'enPassant':
+				this.board.move(toCoord, fromCoord)
+				this.board.place(capturedPiece, capturedCoord)
+				break
+			case 'promotion':
+				this.board.place(capturedPiece, capturedCoord)
+				this.board.place(piece, fromCoord)
+				break
+			case 'castle':
+				this.board.move(toCoord, fromCoord)
+				// Undo castling specific rook moves
+				if (toCoord === 'g1') this.board.move('f1', 'h1')
+				else if (toCoord === 'b1') this.board.move('c1', 'a1')
+				else if (toCoord === 'g8') this.board.move('f8', 'h8')
+				else if (toCoord === 'b8') this.board.move('c8', 'a8')
+
+				break
+			default:
+				this.board.move(toCoord, fromCoord)
+				if (capturedPiece) this.board.place(capturedPiece, capturedCoord)
+		}
+		this.castlingRights = castlingRightsBefore // Restore castling rights
 		this.toggleTurn()
 		this.undoneMoves.push(lastMove)
 	}
@@ -122,8 +152,23 @@ class Game {
 	redoMove() {
 		if (this.undoneMoves.length === 0) return
 		const lastUndoneMove = this.undoneMoves.pop()
-		const { fromCoord, toCoord } = lastUndoneMove
-		this.board.move(fromCoord, toCoord)
+		const { fromCoord, toCoord, moveType } = lastUndoneMove
+
+		switch (moveType) {
+			case 'enPassant':
+				this.board.enPassant(fromCoord, toCoord)
+				break
+			case 'promotion':
+				this.board.move(fromCoord, toCoord)
+				this.board.promote(toCoord, this.board.getPieceObjectFromCoordinate(fromCoord).colour)
+				break
+			case 'castle':
+				this.board.castle(fromCoord, toCoord)
+				this.checkCastlingRights(fromCoord, this.board.getPieceObjectFromCoordinate(toCoord))
+				break
+			default:
+				this.board.move(fromCoord, toCoord)
+		}
 		this.moveHistory.push(lastUndoneMove)
 		this.toggleTurn()
 	}
@@ -341,6 +386,12 @@ class Game {
 		return this.board.coordinateToIndex120(toCoord) === this.board.enPassantIndex && piece.name.toLowerCase() === 'p'
 	}
 
+	isCastleMove(fromCoord, toCoord, piece) {
+		if (piece.name.toLowerCase() !== 'k') return false
+		const moveDistance = Math.abs(this.board.coordinateToIndex120(fromCoord) - this.board.coordinateToIndex120(toCoord))
+		return moveDistance === 2 || moveDistance === 3
+	}
+
 	isPawnPromotion(piece, toCoord) {
 		return piece.name.toLowerCase() === 'p' && (toCoord[1] === '1' || toCoord[1] === '8')
 	}
@@ -379,20 +430,40 @@ class Game {
 
 	// Get captured piece at the destination square
 	retrieveCapturedPiece(toCoord) {
-		const pieceAtDestination = this.board.getPieceHtmlFromCoordinate(toCoord)
-		return pieceAtDestination ? pieceAtDestination.id : null
+		const pieceAtDestination = this.board.getPieceObjectFromCoordinate(toCoord)
+		return pieceAtDestination ? pieceAtDestination.name : null
 	}
 
 	// Check if kingside castling is possible
 	canKingCastleKingside(colour) {
 		const emptySquares = colour === 'white' ? [96, 97] : [26, 27]
-		return this.castlingRights[colour].kingside && this.board.areSquaresEmpty(emptySquares) && !this.areSquaresUnderAttack(emptySquares, colour)
+		const rookPosition = colour === 'white' ? 98 : 28
+		const rookPiece = this.board.getPieceObjectFromCoordinate(this.board.index120ToCoordinate(rookPosition))
+
+		return (
+			this.castlingRights[colour].kingside &&
+			this.board.areSquaresEmpty(emptySquares) &&
+			!this.areSquaresUnderAttack(emptySquares, colour) &&
+			rookPiece &&
+			rookPiece.name.toLowerCase() === 'r' &&
+			rookPiece.colour === colour
+		)
 	}
 
 	// Check if queenside castling is possible
 	canKingCastleQueenside(colour) {
 		const emptySquares = colour === 'white' ? [94, 93, 92] : [24, 23, 22]
-		return this.castlingRights[colour].queenside && this.board.areSquaresEmpty(emptySquares) && !this.areSquaresUnderAttack(emptySquares, colour)
+		const rookPosition = colour === 'white' ? 91 : 21
+		const rookPiece = this.board.getPieceObjectFromCoordinate(this.board.index120ToCoordinate(rookPosition))
+
+		return (
+			this.castlingRights[colour].queenside &&
+			this.board.areSquaresEmpty(emptySquares) &&
+			!this.areSquaresUnderAttack(emptySquares, colour) &&
+			rookPiece &&
+			rookPiece.name.toLowerCase() === 'r' &&
+			rookPiece.colour === colour
+		)
 	}
 
 	// Check if the given squares are under attack

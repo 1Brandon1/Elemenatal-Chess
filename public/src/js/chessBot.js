@@ -5,7 +5,7 @@ class Bot {
 	}
 
 	makeRandomMove() {
-		if (this.game.currentTurn === this.colour && !this.game.gameOver) {
+		if (this.game.activePlayer === this.colour && !this.game.gameOver) {
 			const allMoves = this.game.calculateAllMoves(this.colour)
 			if (allMoves.length === 0) throw new Error('No valid moves')
 			const randomIndex = Math.floor(Math.random() * allMoves.length)

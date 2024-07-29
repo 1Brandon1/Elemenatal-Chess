@@ -60,13 +60,9 @@ class Chessboard {
 		for (const rank of ranks) {
 			let squareCount = 0
 			for (const char of rank) {
-				if (/[1-8]/.test(char)) {
-					squareCount += parseInt(char, 10)
-				} else if (/[prnbqkfweaPRNBQKFWEA]/.test(char)) {
-					squareCount++
-				} else {
-					return false // Invalid character in rank
-				}
+				if (/[1-8]/.test(char)) squareCount += parseInt(char, 10)
+				else if (/[prnbqkfweaPRNBQKFWEA]/.test(char)) squareCount++
+				else return false // Invalid character in rank
 			}
 			if (squareCount !== 8) return false // Invalid number of squares in rank
 		}
@@ -194,18 +190,16 @@ class Chessboard {
 
 		const pieceObject = this.boardArray120[toSquareIndex]
 		this.updateEnPassantIndex(fromCoord, toCoord, pieceObject)
-
-		// Handle castling
-		if (pieceToMove.id.toLowerCase() === 'k') {
-			const moveDistance = Math.abs(fromSquareIndex - toSquareIndex)
-			if (moveDistance === 2 || moveDistance === 3) {
-				this.castle(fromSquareIndex, toSquareIndex)
-			}
-		}
 	}
 
 	// Perform castling move
-	castle(kingFromIndex, kingToIndex) {
+	castle(kingFromCoord, kingToCoord) {
+		const kingFromIndex = this.coordinateToIndex120(kingFromCoord)
+		const kingToIndex = this.coordinateToIndex120(kingToCoord)
+		const kingFromSquare = this.getSquareFromIndex120(kingFromIndex)
+		const kingToSquare = this.getSquareFromIndex120(kingToIndex)
+		const kingToMove = kingFromSquare.querySelector('.piece')
+
 		const direction = kingToIndex > kingFromIndex ? 1 : -1
 		const rookFromIndex = direction === 1 ? kingFromIndex + 3 : kingFromIndex - 4
 		const rookToIndex = kingToIndex - direction
@@ -215,6 +209,10 @@ class Chessboard {
 		const rookToMove = rookFromSquare.querySelector('.piece')
 
 		if (rookToMove) {
+			kingToSquare.appendChild(kingToMove)
+			this.boardArray120[kingToIndex] = this.boardArray120[kingFromIndex]
+			this.boardArray120[kingFromIndex] = ''
+
 			rookToSquare.appendChild(rookToMove)
 			this.boardArray120[rookToIndex] = this.boardArray120[rookFromIndex]
 			this.boardArray120[rookFromIndex] = ''
@@ -261,6 +259,7 @@ class Chessboard {
 
 		this.boardArray120[squareIndex] = piece
 		square.innerHTML = piece.getPieceHtml()
+		this.soundEffects.move.play()
 	}
 
 	//!-------------- Highlight Methods --------------
