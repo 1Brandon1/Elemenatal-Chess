@@ -2,11 +2,15 @@ class Game {
 	constructor() {
 		// Initialize game variables
 		this.board = new Chessboard(this)
-
-		// Default game settings
 		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
 		// this.startPosition = 'rebakfnw/pppppppp/8/8/8/8/PPPPPPPP/REBAKFNW'
 
+		// Bind event handling method
+		this.handleSquareClick = this.handleSquareClick.bind(this)
+		this.selectedSquare = null
+	}
+
+	start() {
 		this.activePlayer = 'white'
 		this.gameOver = false
 		this.availableMoves = []
@@ -19,15 +23,6 @@ class Game {
 			black: { kingside: true, queenside: true }
 		}
 
-		// Bind event handling method
-		this.handleSquareClick = this.handleSquareClick.bind(this)
-		this.selectedSquare = null
-	}
-
-	start() {
-		this.moveHistory = []
-		this.undoneMoves = []
-		this.activePlayer = 'white'
 		this.board.draw(this.startPosition)
 		this.board.enPassantIndex = null
 	}
@@ -69,10 +64,10 @@ class Game {
 		this.executeMove(fromCoord, square.getAttribute('coordinate'), this.board.getPieceFromCoordinate(fromCoord))
 		this.resetSquareSelection()
 
-		if (this.isKingCheckmated(this.getOpponentColour())) {
+		if (this.isKingCheckmated(this.getOpponentColour(this.activePlayer))) {
 			this.gameOver = true
 			console.log('Checkmate!')
-		} else if (this.isKingInCheck(this.getOpponentColour())) {
+		} else if (this.isKingInCheck(this.getOpponentColour(this.activePlayer))) {
 			console.log('Check!')
 		}
 
@@ -87,7 +82,8 @@ class Game {
 		let capturedPiece = null
 		let capturedCoord = null
 		let moveType = 'normal'
-		const castlingRightsBefore = JSON.parse(JSON.stringify(this.castlingRights)) // Save castling rights before the move
+		const castlingRightsBefore = JSON.parse(JSON.stringify(this.castlingRights))
+		const enPassantIndexBefore = this.board.enPassantIndex
 
 		if (this.isEnPassantMove(toCoord, piece)) {
 			const dir = piece === piece.toUpperCase() ? -1 : 1
@@ -109,14 +105,14 @@ class Game {
 			}
 		}
 
-		this.moveHistory.push({ piece, fromCoord, toCoord, capturedPiece, capturedCoord, moveType, castlingRightsBefore }) // Save castling rights with the move
+		this.moveHistory.push({ piece, fromCoord, toCoord, capturedPiece, capturedCoord, moveType, castlingRightsBefore, enPassantIndexBefore })
 		this.checkCastlingRights(fromCoord, piece)
 	}
 
 	undoMove() {
 		if (this.moveHistory.length === 0) return
 		const lastMove = this.moveHistory.pop()
-		const { fromCoord, toCoord, capturedPiece, capturedCoord, moveType, piece, castlingRightsBefore } = lastMove // Retrieve saved castling rights
+		const { fromCoord, toCoord, capturedPiece, capturedCoord, moveType, piece, castlingRightsBefore, enPassantIndexBefore } = lastMove // Retrieve saved castling rights
 		switch (moveType) {
 			case 'enPassant':
 				this.board.move(toCoord, fromCoord)
@@ -128,7 +124,6 @@ class Game {
 				break
 			case 'castle':
 				this.board.move(toCoord, fromCoord)
-				// Undo castling specific rook moves
 				if (toCoord === 'g1') this.board.move('f1', 'h1')
 				else if (toCoord === 'b1') this.board.move('c1', 'a1')
 				else if (toCoord === 'g8') this.board.move('f8', 'h8')
@@ -139,7 +134,9 @@ class Game {
 				this.board.move(toCoord, fromCoord)
 				if (capturedPiece) this.board.place(capturedPiece, capturedCoord)
 		}
-		this.castlingRights = castlingRightsBefore // Restore castling rights
+		this.castlingRights = castlingRightsBefore
+		this.board.enPassantIndex = enPassantIndexBefore
+		this.gameOver = false
 		this.toggleTurn()
 		this.undoneMoves.push(lastMove)
 	}
@@ -180,7 +177,7 @@ class Game {
 
 	// Switch turn between players
 	toggleTurn() {
-		this.activePlayer = this.getOpponentColour()
+		this.activePlayer = this.getOpponentColour(this.activePlayer)
 		console.log(this.displayMoveHistory())
 	}
 
@@ -211,7 +208,7 @@ class Game {
 			case 'n': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21], false); break
 			case 'b': moves = this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true); break
 			case 'r': moves = this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10], true); break
-			case 'q': moves = this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10, -11, -9, 9, 11], true); break
+			case 'q': moves = this.calculateMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11], true); break
 			case 'k': moves = this.calculateKingMoves(currentPosition, colour); break
 			case 'f': moves = this.calculateFireMoves(currentPosition, colour); break
 			case 'w': moves = this.calculateWaterMoves(currentPosition, colour); break
@@ -343,7 +340,7 @@ class Game {
 
 	// Check if the king of the given colour is in check
 	isKingInCheck(colour) {
-		return this.board.isSquareUnderAttack(this.board.findKingIndex(colour), colour === 'white' ? 'black' : 'white')
+		return this.board.isSquareUnderAttack(this.board.findKingIndex(colour), this.getOpponentColour(colour))
 	}
 
 	// Check if the king of the given colour is in checkmate
@@ -450,7 +447,7 @@ class Game {
 	}
 
 	// Get opponent colour
-	getOpponentColour() {
-		return this.activePlayer === 'white' ? 'black' : 'white'
+	getOpponentColour(colour) {
+		return colour === 'white' ? 'black' : 'white'
 	}
 }

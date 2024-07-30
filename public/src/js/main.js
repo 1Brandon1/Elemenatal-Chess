@@ -1,6 +1,19 @@
 const game = new Game()
 game.start()
 
+document.addEventListener('keydown', (event) => {
+	if (event.key.startsWith('Arrow')) {
+		switch (event.key) {
+			case 'ArrowLeft':
+				game.undoMove()
+				break
+			case 'ArrowRight':
+				game.redoMove()
+				break
+		}
+	}
+})
+
 // const bot1 = new Bot(game, 'white')
 // const bot2 = new Bot(game, 'black')
 
@@ -22,8 +35,3 @@ game.start()
 // 		game.toggleTurn()
 // 	}
 // }, 1000)
-
-// game.board.place('F', 'a4')
-// game.board.place('W', 'b4')
-// game.board.place('E', 'c4')
-// game.board.place('A', 'd4')

@@ -77,11 +77,8 @@ class Chessboard {
 
 		fenParts.forEach((rowFen) => {
 			for (const char of rowFen) {
-				if (/[1-8]/.test(char)) {
-					i += parseInt(char, 10)
-				} else {
-					boardArray[i++] = char
-				}
+				if (/[1-8]/.test(char)) i += parseInt(char, 10)
+				else boardArray[i++] = char
 			}
 		})
 
@@ -281,17 +278,17 @@ class Chessboard {
 	findKingIndex(colour) {
 		for (let i = 0; i < 120; i++) {
 			const piece = this.boardArray120[i]
-			if (piece && (piece === colour) === 'white' ? 'K' : 'k') return i
+			if (piece && piece === (colour === 'white' ? 'K' : 'k')) return i
 		}
 		throw new Error(`King of colour ${colour} not found on the board.`)
 	}
 
 	// Update en passant index based on move
 	updateEnPassantIndex(fromCoord, toCoord, piece) {
+		this.enPassantIndex = null
 		if (piece && piece.toLowerCase() === 'p') {
 			const fromSquareIndex = this.coordinateToIndex120(fromCoord)
 			const toSquareIndex = this.coordinateToIndex120(toCoord)
-			this.enPassantIndex = null
 			if (Math.abs(toSquareIndex - fromSquareIndex) === 20) {
 				this.enPassantIndex = (fromSquareIndex + toSquareIndex) / 2
 			}
