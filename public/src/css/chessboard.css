@@ -3,6 +3,7 @@
 .square {
 	display: flex;
 	justify-content: center;
+	position: relative;
 	align-items: center;
 }
 
@@ -17,15 +18,25 @@
 }
 
 .clickedSquare {
-	background-color: red;
-}
-
-.darkHighlight {
-	background-color: #bbcc49;
-}
-
-.lightHighlight {
 	background-color: #f5f67b;
+}
+
+.highlightCircle {
+	position: absolute;
+	width: 30%;
+	height: 30%;
+	background-color: rgba(0, 0, 0, 0.25);
+	border-radius: 50%;
+	pointer-events: none;
+}
+
+.highlightRing {
+	position: absolute;
+	border: 0.4rem solid rgba(0, 0, 0, 0.25);
+	border-radius: 50%;
+	height: 80%;
+	width: 80%;
+	pointer-events: none;
 }
 
 .square img {

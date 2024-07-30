@@ -1,7 +1,7 @@
 {
-	"name": "chess",
+	"name": "elemental-chess",
 	"version": "1.0.0",
-	"description": "Chess?, a dynamic and innovative variant of the classic game of chess!",
+	"description": "Elemental Chess, a dynamic and innovative variant of the classic game of chess!",
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js",

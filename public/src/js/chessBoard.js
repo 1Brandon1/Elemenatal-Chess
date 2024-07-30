@@ -242,7 +242,17 @@ class Chessboard {
 	highlightSquares(moves) {
 		moves.forEach((move) => {
 			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
-			if (square) square.classList.add(square.classList.contains('lightSquare') ? 'lightHighlight' : 'darkHighlight')
+			if (square) {
+				if (this.isSquareOccupiedByOpponent(move, this.game.activePlayer)) {
+					const doughnut = document.createElement('div')
+					doughnut.className = 'highlightRing'
+					square.appendChild(doughnut)
+				} else {
+					const circle = document.createElement('div')
+					circle.className = 'highlightCircle'
+					square.appendChild(circle)
+				}
+			}
 		})
 	}
 
@@ -250,7 +260,12 @@ class Chessboard {
 	unhighlightSquares(moves) {
 		moves.forEach((move) => {
 			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
-			if (square) square.classList.remove('lightHighlight', 'darkHighlight')
+			if (square) {
+				const highlight = square.querySelector('.highlightCircle, .highlightRing')
+				if (highlight) {
+					square.removeChild(highlight)
+				}
+			}
 		})
 	}
 

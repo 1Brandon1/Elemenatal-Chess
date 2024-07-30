@@ -1,6 +1,6 @@
 /* !---------- Board Button Styles ---------- */
 
-.container {
+.button-container {
 	width: 100%;
 	display: flex;
 	flex-direction: row;
