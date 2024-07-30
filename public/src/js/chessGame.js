@@ -54,11 +54,9 @@ class Game {
 	// Actions on first click
 	handleFirstClick(square) {
 		this.selectedSquare = square
-		const squareCoord = square.getAttribute('coordinate')
-		const piece = this.board.getPieceFromCoordinate(squareCoord)
+		const piece = this.board.getPieceFromCoordinate(square.getAttribute('coordinate'))
 		if (!this.isActivePlayersPiece(square)) return
-		const squareIndex = parseInt(square.getAttribute('index120'))
-		this.availableMoves = this.calculateValidMoves(piece, squareIndex)
+		this.availableMoves = this.calculateValidMoves(piece, parseInt(square.getAttribute('index120')))
 		this.board.highlightSquares(this.availableMoves)
 		square.classList.add('clickedSquare')
 	}
@@ -67,10 +65,8 @@ class Game {
 	handleSecondClick(square) {
 		if (!this.availableMoves.includes(parseInt(square.getAttribute('index120')))) return
 		const fromCoord = this.selectedSquare.getAttribute('coordinate')
-		const toCoord = square.getAttribute('coordinate')
-		const piece = this.board.getPieceFromCoordinate(fromCoord)
 
-		this.executeMove(fromCoord, toCoord, piece)
+		this.executeMove(fromCoord, square.getAttribute('coordinate'), this.board.getPieceFromCoordinate(fromCoord))
 		this.resetSquareSelection()
 
 		if (this.isKingCheckmated(this.getOpponentColour())) {
@@ -108,7 +104,7 @@ class Game {
 			if (capturedPiece) capturedCoord = toCoord
 			this.board.move(fromCoord, toCoord)
 			if (this.isPawnPromotion(piece, toCoord)) {
-				this.board.promote(toCoord, this.board.getPieceColor(piece))
+				this.board.promote(toCoord, this.board.getPieceColour(piece))
 				moveType = 'promotion'
 			}
 		}
@@ -160,7 +156,7 @@ class Game {
 				break
 			case 'promotion':
 				this.board.move(fromCoord, toCoord)
-				this.board.promote(toCoord, this.board.getPieceColor(this.board.getPieceFromCoordinate(fromCoord)))
+				this.board.promote(toCoord, this.board.getPieceColour(this.board.getPieceFromCoordinate(toCoord)))
 				break
 			case 'castle':
 				this.board.castle(fromCoord, toCoord)
@@ -190,7 +186,7 @@ class Game {
 
 	// Update castling rights based on the move
 	checkCastlingRights(fromCoord, piece) {
-		const colour = this.board.getPieceColor(piece)
+		const colour = this.board.getPieceColour(piece)
 
 		if (piece === 'k') {
 			this.castlingRights[colour].kingside = false
@@ -205,13 +201,12 @@ class Game {
 
 	// Get valid moves for a piece at a given position
 	calculateValidMoves(piece, currentPosition) {
-		const colour = this.board.getPieceColor(piece)
-		const pieceType = piece.toLowerCase()
+		const colour = this.board.getPieceColour(piece)
 		let moves = []
 
 		// prettier-ignore
 		// Calculate possible moves based on piece type
-		switch (pieceType) {
+		switch (piece.toLowerCase()) {
 			case 'p': moves = this.calculatePawnMoves(currentPosition, colour); break
 			case 'n': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21], false); break
 			case 'b': moves = this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true); break
@@ -266,8 +261,7 @@ class Game {
 			offsets.push(20 * dir)
 		}
 
-		const captureOffsets = [9 * dir, 11 * dir]
-		for (let offset of captureOffsets) {
+		for (let offset of [9 * dir, 11 * dir]) {
 			let newPosition = currentPosition + offset
 			if (this.board.isValidBoardIndex(newPosition)) {
 				if (this.board.isSquareOccupiedByOpponent(newPosition, colour) || newPosition === this.board.enPassantIndex) {
@@ -305,8 +299,7 @@ class Game {
 	// Get valid moves for an Air Spirit
 	calculateAirMoves(currentPosition, colour) {
 		const availableMoves = []
-		const offsets = [-10, -1, 1, 10, -11, -9, 9, 11]
-		for (const offset of offsets) {
+		for (const offset of [-10, -1, 1, 10, -11, -9, 9, 11]) {
 			let newPosition = currentPosition
 			for (let i = 0; i < 3; i++) {
 				// Limit to 3 squares
@@ -326,8 +319,7 @@ class Game {
 			if (this.board.isSquareOccupiedByAlly(i, colour)) {
 				const fromcoord = this.board.index120ToCoordinate(i)
 				const piece = this.board.getPieceFromCoordinate(fromcoord)
-				const availableMoves = this.calculateValidMoves(piece, i)
-				allMoves.push(...availableMoves.map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
+				allMoves.push(...this.calculateValidMoves(piece, i).map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
 			}
 		}
 		return allMoves
@@ -336,7 +328,7 @@ class Game {
 	doesMoveLeaveKingSafe(from, to) {
 		const tempBoard = [...this.board.boardArray120]
 		const pieceToMove = tempBoard[from]
-		const kingColour = this.board.getPieceColor(pieceToMove)
+		const kingColour = this.board.getPieceColour(pieceToMove)
 
 		tempBoard[to] = pieceToMove
 		tempBoard[from] = ''
@@ -344,16 +336,14 @@ class Game {
 		const tempBoardInstance = new Chessboard(this)
 		tempBoardInstance.boardArray120 = tempBoard
 
-		const opponentColour = kingColour === 'white' ? 'black' : 'white'
 		const kingIndex = tempBoardInstance.findKingIndex(kingColour)
 
-		return !tempBoardInstance.isSquareUnderAttack(kingIndex, opponentColour)
+		return !tempBoardInstance.isSquareUnderAttack(kingIndex, this.getOpponentColour(kingColour))
 	}
 
 	// Check if the king of the given colour is in check
 	isKingInCheck(colour) {
-		const kingIndex = this.board.findKingIndex(colour)
-		return this.board.isSquareUnderAttack(kingIndex, colour === 'white' ? 'black' : 'white')
+		return this.board.isSquareUnderAttack(this.board.findKingIndex(colour), colour === 'white' ? 'black' : 'white')
 	}
 
 	// Check if the king of the given colour is in checkmate
@@ -362,8 +352,7 @@ class Game {
 		for (let i = 21; i <= 98; i++) {
 			if (this.board.isSquareOccupiedByAlly(i, colour)) {
 				const piece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(i))
-				const availableMoves = this.calculateValidMoves(piece, i)
-				if (availableMoves.length > 0) return false
+				if (this.calculateValidMoves(piece, i).length > 0) return false
 			}
 		}
 		return true
@@ -400,11 +389,9 @@ class Game {
 
 	// Convert move to chess notation
 	convertMoveToChessNotation(move) {
-		const pieceNotation = move.piece
-		const toNotation = move.toCoord
-		let moveNotation = pieceNotation
+		let moveNotation = move.piece
 		if (move.capturedPiece) moveNotation += 'x'
-		moveNotation += toNotation
+		moveNotation += move.toCoord
 		return moveNotation
 	}
 
@@ -430,8 +417,7 @@ class Game {
 	// Check if kingside castling is possible
 	canKingCastleKingside(colour) {
 		const emptySquares = colour === 'white' ? [96, 97] : [26, 27]
-		const rookPosition = colour === 'white' ? 98 : 28
-		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(rookPosition))
+		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(colour === 'white' ? 98 : 28))
 
 		return (
 			this.castlingRights[colour].kingside &&
@@ -439,15 +425,14 @@ class Game {
 			!this.areSquaresUnderAttack(emptySquares, colour) &&
 			rookPiece &&
 			rookPiece.toLowerCase() === 'r' &&
-			this.board.getPieceColor(rookPiece) === colour
+			this.board.getPieceColour(rookPiece) === colour
 		)
 	}
 
 	// Check if queenside castling is possible
 	canKingCastleQueenside(colour) {
 		const emptySquares = colour === 'white' ? [94, 93, 92] : [24, 23, 22]
-		const rookPosition = colour === 'white' ? 91 : 21
-		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(rookPosition))
+		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(colour === 'white' ? 91 : 21))
 
 		return (
 			this.castlingRights[colour].queenside &&
@@ -455,14 +440,13 @@ class Game {
 			!this.areSquaresUnderAttack(emptySquares, colour) &&
 			rookPiece &&
 			rookPiece.toLowerCase() === 'r' &&
-			this.board.getPieceColor(rookPiece) === colour
+			this.board.getPieceColour(rookPiece) === colour
 		)
 	}
 
 	// Check if the given squares are under attack
 	areSquaresUnderAttack(indices, colour) {
-		const opponentColour = colour === 'white' ? 'black' : 'white'
-		return indices.some((index) => this.board.isSquareUnderAttack(index, opponentColour))
+		return indices.some((index) => this.board.isSquareUnderAttack(index, this.getOpponentColour(colour)))
 	}
 
 	// Get opponent colour

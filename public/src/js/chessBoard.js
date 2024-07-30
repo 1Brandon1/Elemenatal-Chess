@@ -34,7 +34,7 @@ class Chessboard {
 		this.orientation = 'white'
 		this.game = game
 		this.enPassantIndex = null
-
+		if (!this.boardElement) throw new Error('Board element not found in the DOM')
 		this.initSounds()
 	}
 
@@ -51,8 +51,7 @@ class Chessboard {
 
 	// Check if a given FEN string is valid
 	isValidFEN(fen) {
-		const boardPattern = /^[prnbqkfweaPRNBQKFWEA1-8\/]+$/
-		if (!boardPattern.test(fen)) return false
+		if (!/^[prnbqkfweaPRNBQKFWEA1-8\/]+$/.test(fen)) return false
 
 		const ranks = fen.split(' ')[0].split('/')
 		if (ranks.length !== 8) return false
@@ -126,9 +125,8 @@ class Chessboard {
 	createPieceHtml(pieceCode) {
 		if (!pieceCode) return ''
 		const isRegularPiece = ['p', 'r', 'b', 'n', 'q', 'k'].includes(pieceCode.toLowerCase())
-		const folder = isRegularPiece ? 'chessPieces' : 'specialPieces'
 		const pieceColour = pieceCode === pieceCode.toUpperCase() ? 'white' : 'black'
-		const pieceImgSrc = `/assets/${folder}/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
+		const pieceImgSrc = `/assets/${isRegularPiece ? 'chessPieces' : 'specialPieces'}/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
 		return `<div class="piece ${pieceColour}" id="${pieceCode}"><img src="${pieceImgSrc}" alt=""></div>`
 	}
 
@@ -178,32 +176,27 @@ class Chessboard {
 		this.boardArray120[toSquareIndex] = this.boardArray120[fromSquareIndex]
 		this.boardArray120[fromSquareIndex] = ''
 
-		const piece = this.boardArray120[toSquareIndex]
-		this.updateEnPassantIndex(fromCoord, toCoord, piece)
+		this.updateEnPassantIndex(fromCoord, toCoord, this.boardArray120[toSquareIndex])
 	}
 
 	// Perform castling move
 	castle(kingFromCoord, kingToCoord) {
 		const kingFromIndex = this.coordinateToIndex120(kingFromCoord)
 		const kingToIndex = this.coordinateToIndex120(kingToCoord)
-		const kingFromSquare = this.getSquareFromIndex120(kingFromIndex)
-		const kingToSquare = this.getSquareFromIndex120(kingToIndex)
-		const kingToMove = kingFromSquare.querySelector('.piece')
+		const kingToMove = this.getSquareFromIndex120(kingFromIndex).querySelector('.piece')
 
 		const direction = kingToIndex > kingFromIndex ? 1 : -1
 		const rookFromIndex = direction === 1 ? kingFromIndex + 3 : kingFromIndex - 4
 		const rookToIndex = kingToIndex - direction
 
-		const rookFromSquare = this.getSquareFromIndex120(rookFromIndex)
-		const rookToSquare = this.getSquareFromIndex120(rookToIndex)
-		const rookToMove = rookFromSquare.querySelector('.piece')
+		const rookToMove = this.getSquareFromIndex120(rookFromIndex).querySelector('.piece')
 
 		if (rookToMove) {
-			kingToSquare.appendChild(kingToMove)
+			this.getSquareFromIndex120(kingToIndex).appendChild(kingToMove)
 			this.boardArray120[kingToIndex] = this.boardArray120[kingFromIndex]
 			this.boardArray120[kingFromIndex] = ''
 
-			rookToSquare.appendChild(rookToMove)
+			this.getSquareFromIndex120(rookToIndex).appendChild(rookToMove)
 			this.boardArray120[rookToIndex] = this.boardArray120[rookFromIndex]
 			this.boardArray120[rookFromIndex] = ''
 			this.soundEffects.get('castle').play()
@@ -212,14 +205,11 @@ class Chessboard {
 
 	// Performs an en passant capture on the board
 	enPassant(fromCoord, toCoord) {
-		const fromSquareIndex = this.coordinateToIndex120(fromCoord)
-		const toSquareIndex = this.coordinateToIndex120(toCoord)
-		const dir = this.getPieceColor(this.boardArray120[fromSquareIndex]) === 'white' ? 1 : -1
-		const capturedPawnIndex = toSquareIndex + 10 * dir
-		const capturedPawnSquare = this.getSquareFromIndex120(capturedPawnIndex)
+		const dir = this.getPieceColour(this.boardArray120[this.coordinateToIndex120(fromCoord)]) === 'white' ? 1 : -1
+		const capturedPawnIndex = this.coordinateToIndex120(toCoord) + 10 * dir
 
 		this.boardArray120[capturedPawnIndex] = ''
-		capturedPawnSquare.innerHTML = ''
+		this.getSquareFromIndex120(capturedPawnIndex).innerHTML = ''
 		this.move(fromCoord, toCoord)
 		this.soundEffects.get('capture').play()
 	}
@@ -227,7 +217,6 @@ class Chessboard {
 	// Promote a pawn to a different piece
 	promote(coord, colour) {
 		const squareIndex = this.coordinateToIndex120(coord)
-		const squareElement = this.getSquareFromIndex120(squareIndex)
 
 		// allow the user to pick the piece to promote to
 		const option = 'Q'
@@ -235,7 +224,7 @@ class Chessboard {
 		const newPiece = colour === 'black' ? option.toLowerCase() : option
 		const pieceHtml = this.createPieceHtml(newPiece)
 
-		squareElement.innerHTML = pieceHtml
+		this.getSquareFromIndex120(squareIndex).innerHTML = pieceHtml
 		this.boardArray120[squareIndex] = newPiece
 	}
 
@@ -245,10 +234,8 @@ class Chessboard {
 		if (!pieceHtml) throw new Error('Invalid piece name')
 
 		const squareIndex = this.coordinateToIndex120(coordinate)
-		const square = this.getSquareFromIndex120(squareIndex)
-
 		this.boardArray120[squareIndex] = pieceName
-		square.innerHTML = pieceHtml
+		this.getSquareFromIndex120(squareIndex).innerHTML = pieceHtml
 		this.soundEffects.get('move').play()
 	}
 
@@ -285,19 +272,16 @@ class Chessboard {
 	index120ToCoordinate(squareIndex) {
 		squareIndex = Chessboard.MAILBOX120[squareIndex]
 		if (squareIndex === undefined || squareIndex < 0 || squareIndex > 63) throw new Error('Invalid square index')
-		const file = String.fromCharCode(97 + (squareIndex % 8))
-		const rank = 8 - Math.floor(squareIndex / 8)
-		return file + rank
+		return String.fromCharCode(97 + (squareIndex % 8)) + (8 - Math.floor(squareIndex / 8))
 	}
 
 	//!-------------- Helper Methods --------------
 
-	// Find the index of the king for a given color
+	// Find the index of the king for a given colour
 	findKingIndex(colour) {
-		const kingPiece = colour === 'white' ? 'K' : 'k'
-		for (let i = 0; i < this.boardArray120.length; i++) {
+		for (let i = 0; i < 120; i++) {
 			const piece = this.boardArray120[i]
-			if (piece && piece === kingPiece) return i
+			if (piece && (piece === colour) === 'white' ? 'K' : 'k') return i
 		}
 		throw new Error(`King of colour ${colour} not found on the board.`)
 	}
@@ -324,12 +308,11 @@ class Chessboard {
 
 	// Get the piece on a given square
 	getPieceFromCoordinate(coord) {
-		const squareIndex = this.coordinateToIndex120(coord)
-		return this.boardArray120[squareIndex]
+		return this.boardArray120[this.coordinateToIndex120(coord)]
 	}
 
-	// Determine the color of a piece based on its name.
-	getPieceColor(pieceName) {
+	// Determine the colour of a piece based on its name.
+	getPieceColour(pieceName) {
 		return pieceName[0] === pieceName[0].toUpperCase() ? 'white' : 'black'
 	}
 
@@ -341,14 +324,14 @@ class Chessboard {
 	// Check if a square is occupied by an opponent's piece
 	isSquareOccupiedByOpponent(squareIndex, colour) {
 		const piece = this.boardArray120[squareIndex]
-		return piece !== '' && this.getPieceColor(piece) !== colour
+		return piece !== '' && this.getPieceColour(piece) !== colour
 	}
 
 	// Check if a square is occupied by an ally's piece
 	isSquareOccupiedByAlly(squareIndex, colour) {
 		if (!this.isValidBoardIndex(squareIndex)) return false
 		const piece = this.boardArray120[squareIndex]
-		return piece !== '' && this.getPieceColor(piece) === colour
+		return piece !== '' && this.getPieceColour(piece) === colour
 	}
 
 	// Check if a square is occupied
@@ -379,7 +362,7 @@ class Chessboard {
 				while (this.isValidBoardIndex(index)) {
 					const piece = this.boardArray120[index]
 					if (piece) {
-						if (this.getPieceColor(piece) === opponentColour && piece.toLowerCase() === pieceType) {
+						if (this.getPieceColour(piece) === opponentColour && piece.toLowerCase() === pieceType) {
 							return true
 						}
 						if (piece.toLowerCase() !== pieceType) break
