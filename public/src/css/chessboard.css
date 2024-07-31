@@ -51,14 +51,56 @@
 	z-index: 1;
 }
 
+/* !---------- Pawn Promotion Options ---------- */
+
+.options {
+	display: none;
+	position: fixed;
+	z-index: 100;
+	background-color: rgba(0, 0, 0, 0.8);
+	padding: 1.3rem;
+	border-radius: 2rem;
+}
+
+.option-content {
+	display: grid;
+	justify-content: space-around;
+	align-content: space-around;
+	grid-template-columns: repeat(4, 20%);
+	grid-template-rows: repeat(2, 45%);
+}
+
+.piece-option {
+	cursor: pointer;
+	border: 0.1rem solid #fff;
+	border-radius: 15%;
+	text-align: center;
+	color: white;
+}
+
+.piece-option img {
+	width: 100%;
+	height: 100%;
+}
+
+.piece-option:hover {
+	background-color: #444;
+}
+
 /* !---------- Media Queries ---------- */
 
 /* Small screens */
 @media only screen and (max-width: 790px) {
 	.chessboard {
+		position: fixed;
 		display: grid;
 		grid-template-columns: repeat(8, 12vw);
 		grid-template-rows: repeat(8, 12vw);
+	}
+
+	.options {
+		width: 60vw;
+		height: 24vw;
 	}
 }
 
@@ -68,5 +110,10 @@
 		display: grid;
 		grid-template-columns: repeat(8, 11vh);
 		grid-template-rows: repeat(8, 11vh);
+	}
+
+	.options {
+		width: 60vh;
+		height: 24vh;
 	}
 }

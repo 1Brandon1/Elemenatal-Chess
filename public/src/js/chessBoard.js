@@ -30,47 +30,56 @@ class Chessboard {
 	// Constructor for initializing the chessboard
 	constructor(game) {
 		this.boardElement = document.getElementById('Board')
-		this.boardArray120 = new Array(120).fill('off')
+		this.boardArray120 = new Array(120).fill('')
 		this.orientation = 'white'
 		this.game = game
 		this.enPassantIndex = null
+		this.promotionInProgress = false
 		if (!this.boardElement) throw new Error('Board element not found in the DOM')
 		this.initSounds()
+		this.initPromotionOptions()
 	}
 
 	// Initialize sound effects
 	initSounds() {
-		this.soundEffects = new Map([
-			['move', new Audio('/assets/sounds/move.mp3')],
-			['capture', new Audio('/assets/sounds/capture.mp3')],
-			['castle', new Audio('/assets/sounds/castle.mp3')],
-			['check', new Audio('/assets/sounds/check.mp3')],
-			['promote', new Audio('/assets/sounds/promote.mp3')]
-		])
+		const soundFiles = ['move', 'capture', 'castle', 'check', 'promote']
+		this.soundEffects = new Map(soundFiles.map((name) => [name, new Audio(`/assets/sounds/${name}.mp3`)]))
+	}
+
+	// Initialize the promotion options
+	initPromotionOptions() {
+		this.promotionOptions = document.getElementById('promotionOptions')
+		this.pieceOptions = this.promotionOptions.querySelectorAll('.piece-option')
+		this.pieceOptions.forEach((option) => {
+			option.addEventListener('click', (event) => {
+				const piece = event.currentTarget.getAttribute('data-piece')
+				this.getPromotionOption(piece)
+				this.hidePromotionOptions()
+			})
+		})
 	}
 
 	// Check if a given FEN string is valid
 	isValidFEN(fen) {
 		if (!/^[prnbqkfweaPRNBQKFWEA1-8\/]+$/.test(fen)) return false
-
 		const ranks = fen.split(' ')[0].split('/')
-		if (ranks.length !== 8) return false
-
-		return ranks.every((rank) => {
-			let squareCount = 0
-			for (const char of rank) {
-				if (/[1-8]/.test(char)) squareCount += parseInt(char, 10)
-				else if (/[prnbqkfweaPRNBQKFWEA]/.test(char)) squareCount++
-				else return false
-			}
-			return squareCount === 8
-		})
+		return (
+			ranks.length === 8 &&
+			ranks.every((rank) => {
+				let squareCount = 0
+				for (const char of rank) {
+					if (/[1-8]/.test(char)) squareCount += parseInt(char, 10)
+					else if (/[prnbqkfweaPRNBQKFWEA]/.test(char)) squareCount++
+					else return false
+				}
+				return squareCount === 8
+			})
+		)
 	}
 
 	// Convert a FEN string to a 64-square board array
 	convertFENtoArray64(fen) {
 		if (!this.isValidFEN(fen)) throw new Error('Invalid FEN string')
-
 		const boardArray = new Array(64).fill('')
 		const fenParts = fen.split(' ')[0].split('/')
 		let i = 0
@@ -91,7 +100,7 @@ class Chessboard {
 	draw(fen) {
 		const boardArray = this.convertFENtoArray64(fen)
 		this.clear()
-		const fragment = document.createDocumentFragment() // Create a document fragment for performance
+		const fragment = document.createDocumentFragment()
 
 		boardArray.forEach((pieceCode, squareIndex) => {
 			const index120 = Chessboard.MAILBOX64[squareIndex]
@@ -99,7 +108,7 @@ class Chessboard {
 			fragment.appendChild(square)
 		})
 
-		this.boardElement.appendChild(fragment) // Append all squares at once
+		this.boardElement.appendChild(fragment)
 	}
 
 	// Create a square element
@@ -111,19 +120,18 @@ class Chessboard {
 		square.setAttribute('index120', index120)
 
 		const pieceHtml = pieceCode ? this.createPieceHtml(pieceCode) : ''
-		square.innerHTML = pieceHtml ? pieceHtml : ''
+		square.innerHTML = pieceHtml
 		square.addEventListener('click', (event) => this.game.handleSquareClick(event))
 
-		this.boardArray120[index120] = pieceCode ? pieceCode : ''
+		this.boardArray120[index120] = pieceCode || ''
 		return square
 	}
 
 	// Generate HTML representation of the piece
 	createPieceHtml(pieceCode) {
 		if (!pieceCode) return ''
-		const isRegularPiece = ['p', 'r', 'b', 'n', 'q', 'k'].includes(pieceCode.toLowerCase())
 		const pieceColour = pieceCode === pieceCode.toUpperCase() ? 'white' : 'black'
-		const pieceImgSrc = `/assets/${isRegularPiece ? 'chessPieces' : 'specialPieces'}/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
+		const pieceImgSrc = `/assets/chessPieces/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
 		return `<div class="piece ${pieceColour}" id="${pieceCode}"><img src="${pieceImgSrc}" alt=""></div>`
 	}
 
@@ -212,17 +220,26 @@ class Chessboard {
 	}
 
 	// Promote a pawn to a different piece
-	promote(coord, colour) {
-		const squareIndex = this.coordinateToIndex120(coord)
+	promote(coord) {
+		this.promotionSquareIndex = this.coordinateToIndex120(coord)
+		const colour =
+			this.boardArray120[this.promotionSquareIndex] === this.boardArray120[this.promotionSquareIndex].toUpperCase() ? 'white' : 'black'
+		this.showPromotionOptions(colour)
+	}
 
-		// allow the user to pick the piece to promote to
-		const option = 'Q'
+	// Handle pawn promotion
+	getPromotionOption(piece) {
+		const squareIndex = this.promotionSquareIndex
+		const pieceOnSquare = this.boardArray120[squareIndex]
 
-		const newPiece = colour === 'black' ? option.toLowerCase() : option
+		const colour = pieceOnSquare === pieceOnSquare.toUpperCase() ? 'white' : 'black'
+		const newPiece = colour === 'black' ? piece.toLowerCase() : piece
 		const pieceHtml = this.createPieceHtml(newPiece)
 
 		this.getSquareFromIndex120(squareIndex).innerHTML = pieceHtml
 		this.boardArray120[squareIndex] = newPiece
+		this.soundEffects.get('promote').play()
+		this.promotionInProgress = false
 	}
 
 	// Place a new piece on the board
@@ -243,15 +260,10 @@ class Chessboard {
 		moves.forEach((move) => {
 			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
 			if (square) {
-				if (this.isSquareOccupiedByOpponent(move, this.game.activePlayer)) {
-					const doughnut = document.createElement('div')
-					doughnut.className = 'highlightRing'
-					square.appendChild(doughnut)
-				} else {
-					const circle = document.createElement('div')
-					circle.className = 'highlightCircle'
-					square.appendChild(circle)
-				}
+				const highlightElement = this.isSquareOccupiedByOpponent(move, this.game.activePlayer) ? 'highlightRing' : 'highlightCircle'
+				const highlight = document.createElement('div')
+				highlight.className = highlightElement
+				square.appendChild(highlight)
 			}
 		})
 	}
@@ -262,9 +274,7 @@ class Chessboard {
 			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
 			if (square) {
 				const highlight = square.querySelector('.highlightCircle, .highlightRing')
-				if (highlight) {
-					square.removeChild(highlight)
-				}
+				if (highlight) square.removeChild(highlight)
 			}
 		})
 	}
@@ -287,7 +297,39 @@ class Chessboard {
 		return String.fromCharCode(97 + (squareIndex % 8)) + (8 - Math.floor(squareIndex / 8))
 	}
 
+	// Get a square element based on its index
+	getSquareFromIndex120(squareIndex) {
+		if (!this.boardElement) throw new Error('Board element not found')
+		const square = this.boardElement.querySelector(`.square[index120="${squareIndex}"]`)
+		if (!square) throw new Error('Square not found')
+		return square
+	}
+
+	// Get the piece on a given square
+	getPieceFromCoordinate(coord) {
+		return this.boardArray120[this.coordinateToIndex120(coord)]
+	}
+
 	//!-------------- Helper Methods --------------
+
+	// Show the promotion options
+	showPromotionOptions(colour) {
+		if (!this.promotionOptions || !this.pieceOptions) return
+		this.pieceOptions.forEach((option) => {
+			const piece = option.getAttribute('data-piece')
+			const pieceImgSrc = `/assets/chessPieces/${colour[0]}${piece}.svg`
+			option.querySelector('img').src = pieceImgSrc
+			option.querySelector('img').alt = piece
+		})
+		this.promotionOptions.style.display = 'block'
+		this.promotionInProgress = true
+	}
+
+	hidePromotionOptions() {
+		if (!this.promotionOptions) return
+		this.promotionOptions.style.display = 'none'
+		this.promotionInProgress = false
+	}
 
 	// Find the index of the king for a given colour
 	findKingIndex(colour) {
@@ -310,22 +352,10 @@ class Chessboard {
 		}
 	}
 
-	// Get a square element based on its index
-	getSquareFromIndex120(squareIndex) {
-		if (!this.boardElement) throw new Error('Board element not found')
-		const square = this.boardElement.querySelector(`.square[index120="${squareIndex}"]`)
-		if (!square) throw new Error('Square not found')
-		return square
-	}
-
-	// Get the piece on a given square
-	getPieceFromCoordinate(coord) {
-		return this.boardArray120[this.coordinateToIndex120(coord)]
-	}
-
 	// Determine the colour of a piece based on its name.
 	getPieceColour(pieceName) {
-		return pieceName[0] === pieceName[0].toUpperCase() ? 'white' : 'black'
+		if (typeof pieceName !== 'string' || pieceName.length !== 1) throw new Error('Invalid piece name')
+		return pieceName === pieceName.toUpperCase() ? 'white' : 'black'
 	}
 
 	// Check if a square index is within the board's valid range
@@ -367,7 +397,6 @@ class Chessboard {
 			k: [-11, -10, -9, -1, 1, 9, 10, 11]
 		}
 
-		// Helper function to check if a square is attacked by a specific piece type
 		const isAttackedByPiece = (offsets, pieceType) => {
 			for (const offset of offsets) {
 				let index = squareIndex + offset
@@ -379,14 +408,13 @@ class Chessboard {
 						}
 						if (piece.toLowerCase() !== pieceType) break
 					}
-					if (pieceType === 'n' || pieceType === 'k') break // Knights and kings don't slide
+					if (pieceType === 'n' || pieceType === 'k') break
 					index += offset
 				}
 			}
 			return false
 		}
 
-		// Check pawn attacks
 		const pawnOffsets = opponentColour === 'white' ? [11, 9] : [-11, -9]
 		if (
 			pawnOffsets.some((offset) => {
@@ -397,10 +425,7 @@ class Chessboard {
 			return true
 		}
 
-		// Check for knights
 		if (isAttackedByPiece(pieceOffsets.n, 'n')) return true
-
-		// Check for bishops, rooks, and queens
 		if (isAttackedByPiece(pieceOffsets.b, 'b') || isAttackedByPiece(pieceOffsets.r, 'r') || isAttackedByPiece(pieceOffsets.q, 'q')) return true
 		if (isAttackedByPiece(pieceOffsets.k, 'k')) return true
 

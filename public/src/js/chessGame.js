@@ -4,8 +4,6 @@ class Game {
 		this.board = new Chessboard(this)
 		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
 		// this.startPosition = 'rebakfnw/pppppppp/8/8/8/8/PPPPPPPP/REBAKFNW'
-
-		// Bind event handling method
 		this.handleSquareClick = this.handleSquareClick.bind(this)
 		this.selectedSquare = null
 	}
@@ -31,6 +29,8 @@ class Game {
 
 	// Handle square click events
 	handleSquareClick(event) {
+		if (this.board.promotionInProgress) return
+
 		const square = event.currentTarget
 		if (!this.selectedSquare) {
 			this.handleFirstClick(square)
@@ -100,7 +100,7 @@ class Game {
 			if (capturedPiece) capturedCoord = toCoord
 			this.board.move(fromCoord, toCoord)
 			if (this.isPawnPromotion(piece, toCoord)) {
-				this.board.promote(toCoord, this.board.getPieceColour(piece))
+				this.board.promote(toCoord)
 				moveType = 'promotion'
 			}
 		}
@@ -110,9 +110,13 @@ class Game {
 	}
 
 	undoMove() {
+		this.resetSquareSelection()
+		this.board.hidePromotionOptions()
+		this.board.promotionInProgress = false
+
 		if (this.moveHistory.length === 0) return
 		const lastMove = this.moveHistory.pop()
-		const { fromCoord, toCoord, capturedPiece, capturedCoord, moveType, piece, castlingRightsBefore, enPassantIndexBefore } = lastMove // Retrieve saved castling rights
+		const { fromCoord, toCoord, capturedPiece, capturedCoord, moveType, piece, castlingRightsBefore, enPassantIndexBefore } = lastMove
 		switch (moveType) {
 			case 'enPassant':
 				this.board.move(toCoord, fromCoord)
@@ -153,7 +157,7 @@ class Game {
 				break
 			case 'promotion':
 				this.board.move(fromCoord, toCoord)
-				this.board.promote(toCoord, this.board.getPieceColour(this.board.getPieceFromCoordinate(toCoord)))
+				this.board.promote(toCoord)
 				break
 			case 'castle':
 				this.board.castle(fromCoord, toCoord)
@@ -202,7 +206,6 @@ class Game {
 		let moves = []
 
 		// prettier-ignore
-		// Calculate possible moves based on piece type
 		switch (piece.toLowerCase()) {
 			case 'p': moves = this.calculatePawnMoves(currentPosition, colour); break
 			case 'n': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21], false); break
@@ -217,7 +220,6 @@ class Game {
 			default:moves = []
 		}
 
-		// Filter moves that leave the king in check
 		return moves.filter((move) => this.doesMoveLeaveKingSafe(currentPosition, move))
 	}
 
@@ -299,7 +301,6 @@ class Game {
 		for (const offset of [-10, -1, 1, 10, -11, -9, 9, 11]) {
 			let newPosition = currentPosition
 			for (let i = 0; i < 3; i++) {
-				// Limit to 3 squares
 				newPosition += offset
 				if (!this.board.isValidBoardIndex(newPosition) || this.board.isSquareOccupiedByAlly(newPosition, colour)) break
 				availableMoves.push(newPosition)
