@@ -2,8 +2,10 @@ class Game {
 	constructor() {
 		// Initialize game variables
 		this.board = new Chessboard(this)
-		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
 		// this.startPosition = 'rebakfnw/pppppppp/8/8/8/8/PPPPPPPP/REBAKFNW'
+		this.startPosition = 'K7/8/8/4W3/8/8/8/7k'
+
 		this.handleSquareClick = this.handleSquareClick.bind(this)
 		this.selectedSquare = null
 	}
@@ -189,10 +191,10 @@ class Game {
 	checkCastlingRights(fromCoord, piece) {
 		const colour = this.board.getPieceColour(piece)
 
-		if (piece === 'k') {
+		if (piece.toLowerCase() === 'k') {
 			this.castlingRights[colour].kingside = false
 			this.castlingRights[colour].queenside = false
-		} else if (piece === 'r') {
+		} else if (piece.toLowerCase() === 'r') {
 			if (fromCoord === 'a1' || fromCoord === 'a8') this.castlingRights[colour].queenside = false
 			if (fromCoord === 'h1' || fromCoord === 'h8') this.castlingRights[colour].kingside = false
 		}
@@ -207,15 +209,15 @@ class Game {
 
 		// prettier-ignore
 		switch (piece.toLowerCase()) {
+			case 'k': moves = this.calculateKingMoves(currentPosition, colour); break
 			case 'p': moves = this.calculatePawnMoves(currentPosition, colour); break
 			case 'n': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21], false); break
 			case 'b': moves = this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true); break
 			case 'r': moves = this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10], true); break
 			case 'q': moves = this.calculateMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11], true); break
-			case 'k': moves = this.calculateKingMoves(currentPosition, colour); break
+			case 'e': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21], false); break
 			case 'f': moves = this.calculateFireMoves(currentPosition, colour); break
 			case 'w': moves = this.calculateWaterMoves(currentPosition, colour); break
-			case 'e': moves = this.calculateEarthMoves(currentPosition, colour); break
 			case 'a': moves = this.calculateAirMoves(currentPosition, colour); break
 			default:moves = []
 		}
@@ -288,11 +290,6 @@ class Game {
 		return this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10], true).concat(
 			this.calculateMoves(currentPosition, colour, [22, 20, 18, 2, -2, -18, -20, -22], false)
 		)
-	}
-
-	// Get valid moves for an Earth Golem
-	calculateEarthMoves(currentPosition, colour) {
-		return this.calculateMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21], false)
 	}
 
 	// Get valid moves for an Air Spirit

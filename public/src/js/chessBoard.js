@@ -82,15 +82,14 @@ class Chessboard {
 		if (!this.isValidFEN(fen)) throw new Error('Invalid FEN string')
 		const boardArray = new Array(64).fill('')
 		const fenParts = fen.split(' ')[0].split('/')
-		let i = 0
 
+		let i = 0
 		fenParts.forEach((rowFen) => {
 			for (const char of rowFen) {
 				if (/[1-8]/.test(char)) i += parseInt(char, 10)
 				else boardArray[i++] = char
 			}
 		})
-
 		return boardArray
 	}
 
@@ -107,7 +106,6 @@ class Chessboard {
 			const square = this.createSquareHtml(pieceCode, index120, squareIndex)
 			fragment.appendChild(square)
 		})
-
 		this.boardElement.appendChild(fragment)
 	}
 
@@ -161,9 +159,9 @@ class Chessboard {
 	move(fromCoord, toCoord) {
 		const fromSquareIndex = this.coordinateToIndex120(fromCoord)
 		const toSquareIndex = this.coordinateToIndex120(toCoord)
+
 		const fromSquare = this.getSquareFromIndex120(fromSquareIndex)
 		const toSquare = this.getSquareFromIndex120(toSquareIndex)
-
 		if (!fromSquare || !toSquare) throw new Error('Invalid coordinates provided for move.')
 
 		const pieceToMove = fromSquare.querySelector('.piece')
@@ -325,6 +323,7 @@ class Chessboard {
 		this.promotionInProgress = true
 	}
 
+	// Hide the promotion options
 	hidePromotionOptions() {
 		if (!this.promotionOptions) return
 		this.promotionOptions.style.display = 'none'
@@ -393,23 +392,35 @@ class Chessboard {
 			n: [-21, -19, -12, -8, 8, 12, 19, 21],
 			b: [-11, -9, 9, 11],
 			r: [-10, -1, 1, 10],
-			q: [-10, -1, 1, 10, -11, -9, 9, 11],
-			k: [-11, -10, -9, -1, 1, 9, 10, 11]
+			q: [-11, -10, -9, -1, 1, 9, 10, 11],
+			k: [-11, -10, -9, -1, 1, 9, 10, 11],
+			e: [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21],
+			f: [22, 20, 18, 2, -2, -18, -20, -22],
+			w: [22, 20, 18, 2, -2, -18, -20, -22],
+			a: [-11, -10, -9, -1, 1, 9, 10, 11]
 		}
 
-		const isAttackedByPiece = (offsets, pieceType) => {
+		const isAttackedByPiece = (offsets, pieceType, maxDistance = 8) => {
 			for (const offset of offsets) {
 				let index = squareIndex + offset
-				while (this.isValidBoardIndex(index)) {
+				let distance = 1
+				while (this.isValidBoardIndex(index) && distance <= maxDistance) {
 					const piece = this.boardArray120[index]
 					if (piece) {
-						if (this.getPieceColour(piece) === opponentColour && piece.toLowerCase() === pieceType) {
-							return true
-						}
-						if (piece.toLowerCase() !== pieceType) break
+						if (this.getPieceColour(piece) === opponentColour && piece.toLowerCase() === pieceType[0]) return true
+						if (piece.toLowerCase() !== pieceType[0]) break
 					}
-					if (pieceType === 'n' || pieceType === 'k') break
+					if (
+						pieceType[0] === 'n' ||
+						pieceType[0] === 'k' ||
+						pieceType[0] === 'e' ||
+						pieceType[1] === 'r' ||
+						pieceType[1] === 'b' ||
+						pieceType[1] === 'a'
+					)
+						break
 					index += offset
+					distance++
 				}
 			}
 			return false
@@ -419,7 +430,11 @@ class Chessboard {
 		if (
 			pawnOffsets.some((offset) => {
 				const index = squareIndex + offset
-				return this.isValidBoardIndex(index) && this.isSquareOccupiedByOpponent(index, opponentColour === 'white' ? 'black' : 'white')
+				return (
+					this.isValidBoardIndex(index) &&
+					this.isSquareOccupiedByOpponent(index, opponentColour === 'white' ? 'black' : 'white') &&
+					this.getPieceFromCoordinate(this.index120ToCoordinate(index)) === 'p'
+				)
 			})
 		) {
 			return true
@@ -428,6 +443,10 @@ class Chessboard {
 		if (isAttackedByPiece(pieceOffsets.n, 'n')) return true
 		if (isAttackedByPiece(pieceOffsets.b, 'b') || isAttackedByPiece(pieceOffsets.r, 'r') || isAttackedByPiece(pieceOffsets.q, 'q')) return true
 		if (isAttackedByPiece(pieceOffsets.k, 'k')) return true
+		if (isAttackedByPiece(pieceOffsets.b, 'f') || isAttackedByPiece(pieceOffsets.f, 'fb')) return true
+		if (isAttackedByPiece(pieceOffsets.r, 'w') || isAttackedByPiece(pieceOffsets.w, 'wr')) return true
+		if (isAttackedByPiece(pieceOffsets.e, 'e')) return true
+		if (isAttackedByPiece(pieceOffsets.a, 'a', 3)) return true
 
 		return false
 	}
