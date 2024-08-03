@@ -3,8 +3,7 @@ class Game {
 		// Initialize game variables
 		this.board = new Chessboard(this)
 		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		// this.startPosition = 'rebakfnw/pppppppp/8/8/8/8/PPPPPPPP/REBAKFNW'
-		this.startPosition = 'K7/8/8/4W3/8/8/8/7k'
+		this.startPosition = 'rfbekanw/pppppppp/8/8/8/8/PPPPPPPP/RFBEKANW'
 
 		this.handleSquareClick = this.handleSquareClick.bind(this)
 		this.selectedSquare = null
@@ -215,8 +214,8 @@ class Game {
 			case 'b': moves = this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true); break
 			case 'r': moves = this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10], true); break
 			case 'q': moves = this.calculateMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11], true); break
-			case 'e': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21], false); break
-			case 'f': moves = this.calculateFireMoves(currentPosition, colour); break
+			case 'f': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21], false); break
+			case 'e': moves = this.calculateEarthMoves(currentPosition, colour); break
 			case 'w': moves = this.calculateWaterMoves(currentPosition, colour); break
 			case 'a': moves = this.calculateAirMoves(currentPosition, colour); break
 			default:moves = []
@@ -279,7 +278,7 @@ class Game {
 	}
 
 	// Get valid moves for a Fire Mage
-	calculateFireMoves(currentPosition, colour) {
+	calculateAirMoves(currentPosition, colour) {
 		return this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true).concat(
 			this.calculateMoves(currentPosition, colour, [22, 20, 18, 2, -2, -18, -20, -22], false)
 		)
@@ -293,7 +292,7 @@ class Game {
 	}
 
 	// Get valid moves for an Air Spirit
-	calculateAirMoves(currentPosition, colour) {
+	calculateEarthMoves(currentPosition, colour) {
 		const availableMoves = []
 		for (const offset of [-10, -1, 1, 10, -11, -9, 9, 11]) {
 			let newPosition = currentPosition

@@ -394,10 +394,10 @@ class Chessboard {
 			r: [-10, -1, 1, 10],
 			q: [-11, -10, -9, -1, 1, 9, 10, 11],
 			k: [-11, -10, -9, -1, 1, 9, 10, 11],
-			e: [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21],
-			f: [22, 20, 18, 2, -2, -18, -20, -22],
+			f: [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21],
+			a: [22, 20, 18, 2, -2, -18, -20, -22],
 			w: [22, 20, 18, 2, -2, -18, -20, -22],
-			a: [-11, -10, -9, -1, 1, 9, 10, 11]
+			e: [-11, -10, -9, -1, 1, 9, 10, 11]
 		}
 
 		const isAttackedByPiece = (offsets, pieceType, maxDistance = 8) => {
@@ -410,15 +410,7 @@ class Chessboard {
 						if (this.getPieceColour(piece) === opponentColour && piece.toLowerCase() === pieceType[0]) return true
 						if (piece.toLowerCase() !== pieceType[0]) break
 					}
-					if (
-						pieceType[0] === 'n' ||
-						pieceType[0] === 'k' ||
-						pieceType[0] === 'e' ||
-						pieceType[1] === 'r' ||
-						pieceType[1] === 'b' ||
-						pieceType[1] === 'a'
-					)
-						break
+					if (pieceType[0] === 'n' || pieceType[0] === 'k' || pieceType[0] === 'f' || pieceType[1] === 'r' || pieceType[1] === 'b') break
 					index += offset
 					distance++
 				}
@@ -443,11 +435,27 @@ class Chessboard {
 		if (isAttackedByPiece(pieceOffsets.n, 'n')) return true
 		if (isAttackedByPiece(pieceOffsets.b, 'b') || isAttackedByPiece(pieceOffsets.r, 'r') || isAttackedByPiece(pieceOffsets.q, 'q')) return true
 		if (isAttackedByPiece(pieceOffsets.k, 'k')) return true
-		if (isAttackedByPiece(pieceOffsets.b, 'f') || isAttackedByPiece(pieceOffsets.f, 'fb')) return true
+
+		if (isAttackedByPiece(pieceOffsets.b, 'a') || isAttackedByPiece(pieceOffsets.a, 'ab')) return true
 		if (isAttackedByPiece(pieceOffsets.r, 'w') || isAttackedByPiece(pieceOffsets.w, 'wr')) return true
-		if (isAttackedByPiece(pieceOffsets.e, 'e')) return true
-		if (isAttackedByPiece(pieceOffsets.a, 'a', 3)) return true
+		if (isAttackedByPiece(pieceOffsets.f, 'f')) return true
+		if (isAttackedByPiece(pieceOffsets.e, 'e', 3)) return true
 
 		return false
+	}
+
+	// Method to test which squares are under attack
+	test(opponentColour) {
+		const attackedSquares = []
+
+		for (let squareIndex = 21; squareIndex <= 98; squareIndex++) {
+			if (squareIndex % 10 === 0 || (squareIndex + 1) % 10 === 0) continue // Skip invalid squares
+
+			if (this.isSquareUnderAttack(squareIndex, opponentColour)) {
+				attackedSquares.push(this.getSquareFromIndex120(squareIndex))
+			}
+		}
+
+		return attackedSquares
 	}
 }

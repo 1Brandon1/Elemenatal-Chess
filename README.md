@@ -6,7 +6,7 @@ Welcome to Elemental Chess, a dynamic and innovative variant of the classic game
 
 1. **Fire Mage**:
 
-    - Moves like a bishop but can also move two squares in any direction.
+    - Moves like a knight but can also move one square in any direction.
     - **Special Ability**: Can "burn" a piece directly in front of it (horizontally, vertically, or diagonally) once per game, removing that piece from the board.
 
 2. **Water Mage**:
@@ -16,21 +16,22 @@ Welcome to Elemental Chess, a dynamic and innovative variant of the classic game
 
 3. **Earth Golem**:
 
-    - Moves like a knight but can also move one square in any direction.
+    - Moves like a queen but can only move up to three squares in any direction.
     - **Special Ability**: Can "fortify" an adjacent piece, making it immune to capture for one turn. This ability can be used twice per game.
 
 4. **Air Spirit**:
-    - Moves like a queen but can only move up to three squares in any direction.
+
+    - Moves like a bishop but can also move two squares in any direction.
     - **Special Ability**: Can "teleport" to any unoccupied square once per game.
 
 ## Setup
 
 -   The new pieces are placed in specific positions, while the rest of the board is set up as in standard chess.
 -   Positions:
-    -   Fire Mage on f1 (White) and f8 (Black)
+    -   Fire Mage on b1 (White) and b8 (Black)
     -   Water Mage on h1 (White) and h8 (Black)
-    -   Earth Golem on b1 (White) and b8 (Black)
-    -   Air Spirit on d1 (White) and d8 (Black)
+    -   Earth Golem on d1 (White) and d8 (Black)
+    -   Air Spirit on f1 (White) and f8 (Black)
 
 ## Rules
 
