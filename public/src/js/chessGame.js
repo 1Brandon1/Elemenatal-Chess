@@ -1,14 +1,14 @@
 class Game {
 	constructor() {
-		// Initialize game variables
 		this.board = new Chessboard(this)
-		// this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-		this.startPosition = 'rfbekanw/pppppppp/8/8/8/8/PPPPPPPP/RFBEKANW'
+		this.startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+		// this.startPosition = 'rfbekanw/pppppppp/8/8/8/8/PPPPPPPP/RFBEKANW'
 
 		this.handleSquareClick = this.handleSquareClick.bind(this)
 		this.selectedSquare = null
 	}
 
+	// Initializes the game
 	start() {
 		this.activePlayer = 'white'
 		this.gameOver = false
@@ -16,17 +16,27 @@ class Game {
 		this.moveHistory = []
 		this.undoneMoves = []
 
-		// Initialize castling state
 		this.castlingRights = {
 			white: { kingside: true, queenside: true },
 			black: { kingside: true, queenside: true }
 		}
 
+		this.specialAbilityUsage = {
+			fire: 0,
+			water: 0,
+			earth: 0,
+			air: 0,
+			fireLimit: 1,
+			waterLimit: 2,
+			earthLimit: 2,
+			airLimit: 1
+		}
+
 		this.board.draw(this.startPosition)
-		this.board.enPassantIndex = null
+		this.enPassantIndex = null
 	}
 
-	//!-------------- Event Handling Methods --------------
+	//!-------------- Game Flow --------------
 
 	// Handle square click events
 	handleSquareClick(event) {
@@ -76,7 +86,22 @@ class Game {
 		this.undoneMoves = []
 	}
 
-	//!-------------- Move Management Methods --------------
+	// Switch turn between players
+	toggleTurn() {
+		this.activePlayer = this.getOpponentColour(this.activePlayer)
+		console.log(this.displayMoveHistory())
+	}
+
+	// Reset square selection and valid moves
+	resetSquareSelection() {
+		if (!this.selectedSquare) return
+		this.selectedSquare.classList.remove('clickedSquare')
+		this.board.unhighlightSquares(this.availableMoves)
+		this.selectedSquare = null
+		this.availableMoves = []
+	}
+
+	//!-------------- Move Management --------------
 
 	// Make a move
 	executeMove(fromCoord, toCoord, piece) {
@@ -84,11 +109,11 @@ class Game {
 		let capturedCoord = null
 		let moveType = 'normal'
 		const castlingRightsBefore = JSON.parse(JSON.stringify(this.castlingRights))
-		const enPassantIndexBefore = this.board.enPassantIndex
+		const enPassantIndexBefore = this.enPassantIndex
 
 		if (this.isEnPassantMove(toCoord, piece)) {
 			const dir = piece === piece.toUpperCase() ? -1 : 1
-			const enPassantCoord = this.board.index120ToCoordinate(this.board.enPassantIndex - 10 * dir)
+			const enPassantCoord = this.board.index120ToCoordinate(this.enPassantIndex - 10 * dir)
 			capturedPiece = this.retrieveCapturedPiece(enPassantCoord)
 			capturedCoord = enPassantCoord
 			this.board.enPassant(fromCoord, toCoord)
@@ -107,9 +132,10 @@ class Game {
 		}
 
 		this.moveHistory.push({ piece, fromCoord, toCoord, capturedPiece, capturedCoord, moveType, castlingRightsBefore, enPassantIndexBefore })
-		this.checkCastlingRights(fromCoord, piece)
+		this.updateCastlingRights(fromCoord, piece)
 	}
 
+	// Undoes the last move
 	undoMove() {
 		this.resetSquareSelection()
 		this.board.hidePromotionOptions()
@@ -133,20 +159,19 @@ class Game {
 				else if (toCoord === 'b1') this.board.move('c1', 'a1')
 				else if (toCoord === 'g8') this.board.move('f8', 'h8')
 				else if (toCoord === 'b8') this.board.move('c8', 'a8')
-
 				break
 			default:
 				this.board.move(toCoord, fromCoord)
 				if (capturedPiece) this.board.place(capturedPiece, capturedCoord)
 		}
 		this.castlingRights = castlingRightsBefore
-		this.board.enPassantIndex = enPassantIndexBefore
+		this.enPassantIndex = enPassantIndexBefore
 		this.gameOver = false
 		this.toggleTurn()
 		this.undoneMoves.push(lastMove)
 	}
 
-	// Redo the last undone move
+	// Redoes the last undone move
 	redoMove() {
 		if (this.undoneMoves.length === 0) return
 		const lastUndoneMove = this.undoneMoves.pop()
@@ -162,7 +187,7 @@ class Game {
 				break
 			case 'castle':
 				this.board.castle(fromCoord, toCoord)
-				this.checkCastlingRights(fromCoord, this.board.getPieceFromCoordinate(toCoord))
+				this.updateCastlingRights(fromCoord, this.board.getPieceFromCoordinate(toCoord))
 				break
 			default:
 				this.board.move(fromCoord, toCoord)
@@ -171,35 +196,7 @@ class Game {
 		this.toggleTurn()
 	}
 
-	// Reset square selection and valid moves
-	resetSquareSelection() {
-		if (!this.selectedSquare) return
-		this.selectedSquare.classList.remove('clickedSquare')
-		this.board.unhighlightSquares(this.availableMoves)
-		this.selectedSquare = null
-		this.availableMoves = []
-	}
-
-	// Switch turn between players
-	toggleTurn() {
-		this.activePlayer = this.getOpponentColour(this.activePlayer)
-		console.log(this.displayMoveHistory())
-	}
-
-	// Update castling rights based on the move
-	checkCastlingRights(fromCoord, piece) {
-		const colour = this.board.getPieceColour(piece)
-
-		if (piece.toLowerCase() === 'k') {
-			this.castlingRights[colour].kingside = false
-			this.castlingRights[colour].queenside = false
-		} else if (piece.toLowerCase() === 'r') {
-			if (fromCoord === 'a1' || fromCoord === 'a8') this.castlingRights[colour].queenside = false
-			if (fromCoord === 'h1' || fromCoord === 'h8') this.castlingRights[colour].kingside = false
-		}
-	}
-
-	//!-------------- Move Validation Methods --------------
+	//!-------------- Move Validity and Calculation --------------
 
 	// Get valid moves for a piece at a given position
 	calculateValidMoves(piece, currentPosition) {
@@ -208,18 +205,18 @@ class Game {
 
 		// prettier-ignore
 		switch (piece.toLowerCase()) {
-			case 'k': moves = this.calculateKingMoves(currentPosition, colour); break
-			case 'p': moves = this.calculatePawnMoves(currentPosition, colour); break
-			case 'n': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21], false); break
-			case 'b': moves = this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true); break
-			case 'r': moves = this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10], true); break
-			case 'q': moves = this.calculateMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11], true); break
-			case 'f': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21], false); break
-			case 'e': moves = this.calculateEarthMoves(currentPosition, colour); break
-			case 'w': moves = this.calculateWaterMoves(currentPosition, colour); break
-			case 'a': moves = this.calculateAirMoves(currentPosition, colour); break
-			default:moves = []
-		}
+            case 'k': moves = this.calculateKingMoves(currentPosition, colour); break
+            case 'p': moves = this.calculatePawnMoves(currentPosition, colour); break
+            case 'n': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -8, 8, 12, 19, 21], false); break
+            case 'b': moves = this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true); break
+            case 'r': moves = this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10], true); break
+            case 'q': moves = this.calculateMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11], true); break
+            case 'f': moves = this.calculateMoves(currentPosition, colour, [-21, -19, -12, -11, -10, -9, -8, -1, 1, 8, 9, 10, 11, 12, 19, 21], false); break
+            case 'e': moves = this.calculateEarthMoves(currentPosition, colour); break
+            case 'w': moves = this.calculateWaterMoves(currentPosition, colour); break
+            case 'a': moves = this.calculateAirMoves(currentPosition, colour); break
+            default:moves = []
+        }
 
 		return moves.filter((move) => this.doesMoveLeaveKingSafe(currentPosition, move))
 	}
@@ -264,7 +261,7 @@ class Game {
 		for (let offset of [9 * dir, 11 * dir]) {
 			let newPosition = currentPosition + offset
 			if (this.board.isValidBoardIndex(newPosition)) {
-				if (this.board.isSquareOccupiedByOpponent(newPosition, colour) || newPosition === this.board.enPassantIndex) {
+				if (this.board.isSquareOccupiedByOpponent(newPosition, colour) || newPosition === this.enPassantIndex) {
 					availableMoves.push(newPosition)
 				}
 			}
@@ -277,48 +274,34 @@ class Game {
 		return availableMoves
 	}
 
-	// Get valid moves for a Fire Mage
-	calculateAirMoves(currentPosition, colour) {
-		return this.calculateMoves(currentPosition, colour, [-11, -9, 9, 11], true).concat(
-			this.calculateMoves(currentPosition, colour, [22, 20, 18, 2, -2, -18, -20, -22], false)
-		)
+	// Calculate moves for Fire Mage
+	calculateFireMoves(currentPosition, colour) {
+		const knightMoves = [-21, -19, -12, -8, 8, 12, 19, 21]
+		const kingMoves = [-11, -10, -9, -1, 1, 9, 10, 11]
+		return this.calculateMoves(currentPosition, colour, knightMoves.concat(kingMoves), false)
 	}
 
-	// Get valid moves for a Water Mage
+	// Calculate moves for Water Mage
 	calculateWaterMoves(currentPosition, colour) {
-		return this.calculateMoves(currentPosition, colour, [-10, -1, 1, 10], true).concat(
-			this.calculateMoves(currentPosition, colour, [22, 20, 18, 2, -2, -18, -20, -22], false)
-		)
+		const rookMoves = [-10, -1, 1, 10]
+		const specialMoves = [22, 20, 18, 2, -2, -18, -20, -22]
+		return this.calculateMoves(currentPosition, colour, rookMoves.concat(specialMoves), false)
 	}
 
-	// Get valid moves for an Air Spirit
+	// Calculate moves for Earth Golem
 	calculateEarthMoves(currentPosition, colour) {
-		const availableMoves = []
-		for (const offset of [-10, -1, 1, 10, -11, -9, 9, 11]) {
-			let newPosition = currentPosition
-			for (let i = 0; i < 3; i++) {
-				newPosition += offset
-				if (!this.board.isValidBoardIndex(newPosition) || this.board.isSquareOccupiedByAlly(newPosition, colour)) break
-				availableMoves.push(newPosition)
-				if (this.board.isSquareOccupiedByOpponent(newPosition, colour)) break
-			}
-		}
-		return availableMoves
+		const queenMoves = [-11, -10, -9, -1, 1, 9, 10, 11]
+		return this.calculateMoves(currentPosition, colour, queenMoves, true).filter((move) => Math.abs(move - currentPosition) <= 30)
 	}
 
-	// Get all possible moves of the specified colour
-	calculateAllMoves(colour) {
-		const allMoves = []
-		for (let i = 21; i <= 98; i++) {
-			if (this.board.isSquareOccupiedByAlly(i, colour)) {
-				const fromcoord = this.board.index120ToCoordinate(i)
-				const piece = this.board.getPieceFromCoordinate(fromcoord)
-				allMoves.push(...this.calculateValidMoves(piece, i).map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
-			}
-		}
-		return allMoves
+	// Calculate moves for Air Spirit
+	calculateAirMoves(currentPosition, colour) {
+		const bishopMoves = [-11, -9, 9, 11]
+		const specialMoves = [22, 20, 18, 2, -2, -18, -20, -22]
+		return this.calculateMoves(currentPosition, colour, bishopMoves.concat(specialMoves), false)
 	}
 
+	//  Checks if a move leaves the king safe
 	doesMoveLeaveKingSafe(from, to) {
 		const tempBoard = [...this.board.boardArray120]
 		const pieceToMove = tempBoard[from]
@@ -334,6 +317,8 @@ class Game {
 
 		return !tempBoardInstance.isSquareUnderAttack(kingIndex, this.getOpponentColour(kingColour))
 	}
+
+	//!-------------- Game Status and Utility --------------
 
 	// Check if the king of the given colour is in check
 	isKingInCheck(colour) {
@@ -352,27 +337,16 @@ class Game {
 		return true
 	}
 
-	// Check if the clicked square contains the current player's piece
-	isActivePlayersPiece(square) {
-		const piece = square.querySelector('.piece')
-		return piece && piece.classList.contains(this.activePlayer)
+	// Get opponent colour
+	getOpponentColour(colour) {
+		return colour === 'white' ? 'black' : 'white'
 	}
 
-	isEnPassantMove(toCoord, piece) {
-		return this.board.coordinateToIndex120(toCoord) === this.board.enPassantIndex && piece.toLowerCase() === 'p'
+	// Get captured piece at the destination square
+	retrieveCapturedPiece(toCoord) {
+		const pieceAtDestination = this.board.getPieceFromCoordinate(toCoord)
+		return pieceAtDestination ? pieceAtDestination : null
 	}
-
-	isCastleMove(fromCoord, toCoord, piece) {
-		if (piece.toLowerCase() !== 'k') return false
-		const moveDistance = Math.abs(this.board.coordinateToIndex120(fromCoord) - this.board.coordinateToIndex120(toCoord))
-		return moveDistance === 2 || moveDistance === 3
-	}
-
-	isPawnPromotion(piece, toCoord) {
-		return piece.toLowerCase() === 'p' && (toCoord[1] === '1' || toCoord[1] === '8')
-	}
-
-	//!-------------- Move Conversion Methods --------------
 
 	// Convert move to a description (eg. P from d2 to d4)
 	convertMoveToString(move) {
@@ -389,8 +363,6 @@ class Game {
 		return moveNotation
 	}
 
-	//!-------------- Helper Methods --------------
-
 	// Print move history
 	displayMoveHistory() {
 		if (this.moveHistory.length === 0) {
@@ -402,49 +374,33 @@ class Game {
 		}
 	}
 
-	// Get captured piece at the destination square
-	retrieveCapturedPiece(toCoord) {
-		const pieceAtDestination = this.board.getPieceFromCoordinate(toCoord)
-		return pieceAtDestination ? pieceAtDestination : null
+	//!-------------- Helpers --------------
+
+	// Check if the clicked square contains the current player's piece
+	isActivePlayersPiece(square) {
+		const piece = square.querySelector('.piece')
+		return piece && piece.classList.contains(this.activePlayer)
 	}
 
-	// Check if kingside castling is possible
-	canKingCastleKingside(colour) {
-		const emptySquares = colour === 'white' ? [96, 97] : [26, 27]
-		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(colour === 'white' ? 98 : 28))
-
-		return (
-			this.castlingRights[colour].kingside &&
-			this.board.areSquaresEmpty(emptySquares) &&
-			!this.areSquaresUnderAttack(emptySquares, colour) &&
-			rookPiece &&
-			rookPiece.toLowerCase() === 'r' &&
-			this.board.getPieceColour(rookPiece) === colour
-		)
+	// Checks if a move is en passant
+	isEnPassantMove(toCoord, piece) {
+		return this.board.coordinateToIndex120(toCoord) === this.enPassantIndex && piece.toLowerCase() === 'p'
 	}
 
-	// Check if queenside castling is possible
-	canKingCastleQueenside(colour) {
-		const emptySquares = colour === 'white' ? [94, 93, 92] : [24, 23, 22]
-		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(colour === 'white' ? 91 : 21))
+	// Checks if a move is castling
+	isCastleMove(fromCoord, toCoord, piece) {
+		if (piece.toLowerCase() !== 'k') return false
+		const moveDistance = Math.abs(this.board.coordinateToIndex120(fromCoord) - this.board.coordinateToIndex120(toCoord))
+		return moveDistance === 2 || moveDistance === 3
+	}
 
-		return (
-			this.castlingRights[colour].queenside &&
-			this.board.areSquaresEmpty(emptySquares) &&
-			!this.areSquaresUnderAttack(emptySquares, colour) &&
-			rookPiece &&
-			rookPiece.toLowerCase() === 'r' &&
-			this.board.getPieceColour(rookPiece) === colour
-		)
+	// Checks if a move is a pawn promotion
+	isPawnPromotion(piece, toCoord) {
+		return piece.toLowerCase() === 'p' && (toCoord[1] === '1' || toCoord[1] === '8')
 	}
 
 	// Check if the given squares are under attack
 	areSquaresUnderAttack(indices, colour) {
 		return indices.some((index) => this.board.isSquareUnderAttack(index, this.getOpponentColour(colour)))
-	}
-
-	// Get opponent colour
-	getOpponentColour(colour) {
-		return colour === 'white' ? 'black' : 'white'
 	}
 }

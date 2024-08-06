@@ -2,51 +2,44 @@ class Chessboard {
 	// Predefined constants for board indices
 	// prettier-ignore
 	static MAILBOX120 = [
-		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-		-1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
-		-1,  8,  9, 10, 11, 12, 13, 14, 15, -1,
-		-1, 16, 17, 18, 19, 20, 21, 22, 23, -1,
-		-1, 24, 25, 26, 27, 28, 29, 30, 31, -1,
-		-1, 32, 33, 34, 35, 36, 37, 38, 39, -1,
-		-1, 40, 41, 42, 43, 44, 45, 46, 47, -1,
-		-1, 48, 49, 50, 51, 52, 53, 54, 55, -1,
-		-1, 56, 57, 58, 59, 60, 61, 62, 63, -1,
-		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1
-	]
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
+        -1,  8,  9, 10, 11, 12, 13, 14, 15, -1,
+        -1, 16, 17, 18, 19, 20, 21, 22, 23, -1,
+        -1, 24, 25, 26, 27, 28, 29, 30, 31, -1,
+        -1, 32, 33, 34, 35, 36, 37, 38, 39, -1,
+        -1, 40, 41, 42, 43, 44, 45, 46, 47, -1,
+        -1, 48, 49, 50, 51, 52, 53, 54, 55, -1,
+        -1, 56, 57, 58, 59, 60, 61, 62, 63, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+    ]
 	// prettier-ignore
 	static MAILBOX64 = [
-		21, 22, 23, 24, 25, 26, 27, 28,
-		31, 32, 33, 34, 35, 36, 37, 38,
-		41, 42, 43, 44, 45, 46, 47, 48,
-		51, 52, 53, 54, 55, 56, 57, 58,
-		61, 62, 63, 64, 65, 66, 67, 68,
-		71, 72, 73, 74, 75, 76, 77, 78,
-		81, 82, 83, 84, 85, 86, 87, 88,
-		91, 92, 93, 94, 95, 96, 97, 98
-	]
+        21, 22, 23, 24, 25, 26, 27, 28,
+        31, 32, 33, 34, 35, 36, 37, 38,
+        41, 42, 43, 44, 45, 46, 47, 48,
+        51, 52, 53, 54, 55, 56, 57, 58,
+        61, 62, 63, 64, 65, 66, 67, 68,
+        71, 72, 73, 74, 75, 76, 77, 78,
+        81, 82, 83, 84, 85, 86, 87, 88,
+        91, 92, 93, 94, 95, 96, 97, 98
+    ]
 
-	// Constructor for initializing the chessboard
+	// Constructor for initialising the chessboard
 	constructor(game) {
 		this.boardElement = document.getElementById('Board')
 		this.boardArray120 = new Array(120).fill('')
-		this.orientation = 'white'
 		this.game = game
-		this.enPassantIndex = null
 		this.promotionInProgress = false
-		if (!this.boardElement) throw new Error('Board element not found in the DOM')
 		this.initSounds()
 		this.initPromotionOptions()
 	}
 
-	// Initialize sound effects
-	initSounds() {
-		const soundFiles = ['move', 'capture', 'castle', 'check', 'promote']
-		this.soundEffects = new Map(soundFiles.map((name) => [name, new Audio(`/assets/sounds/${name}.mp3`)]))
-	}
+	//!-------------- Board Initialization and Setup --------------
 
-	// Initialize the promotion options
+	// Initialise the promotion options
 	initPromotionOptions() {
 		this.promotionOptions = document.getElementById('promotionOptions')
 		this.pieceOptions = this.promotionOptions.querySelectorAll('.piece-option')
@@ -59,41 +52,15 @@ class Chessboard {
 		})
 	}
 
-	// Check if a given FEN string is valid
-	isValidFEN(fen) {
-		if (!/^[prnbqkfweaPRNBQKFWEA1-8\/]+$/.test(fen)) return false
-		const ranks = fen.split(' ')[0].split('/')
-		return (
-			ranks.length === 8 &&
-			ranks.every((rank) => {
-				let squareCount = 0
-				for (const char of rank) {
-					if (/[1-8]/.test(char)) squareCount += parseInt(char, 10)
-					else if (/[prnbqkfweaPRNBQKFWEA]/.test(char)) squareCount++
-					else return false
-				}
-				return squareCount === 8
-			})
-		)
-	}
-
-	// Convert a FEN string to a 64-square board array
-	convertFENtoArray64(fen) {
-		if (!this.isValidFEN(fen)) throw new Error('Invalid FEN string')
-		const boardArray = new Array(64).fill('')
-		const fenParts = fen.split(' ')[0].split('/')
-
-		let i = 0
-		fenParts.forEach((rowFen) => {
-			for (const char of rowFen) {
-				if (/[1-8]/.test(char)) i += parseInt(char, 10)
-				else boardArray[i++] = char
-			}
+	// Initialise sound effects
+	initSounds() {
+		const soundFiles = ['move', 'capture', 'castle', 'check', 'promote']
+		this.soundEffects = new Map()
+		soundFiles.forEach((name) => {
+			const audio = new Audio(`/assets/sounds/${name}.mp3`)
+			this.soundEffects.set(name, audio)
 		})
-		return boardArray
 	}
-
-	//!-------------- Board Methods --------------
 
 	// Draw the board based on the given FEN string
 	draw(fen) {
@@ -109,30 +76,6 @@ class Chessboard {
 		this.boardElement.appendChild(fragment)
 	}
 
-	// Create a square element
-	createSquareHtml(pieceCode, index120, squareIndex) {
-		const square = document.createElement('div')
-		const isDarkSquare = ((squareIndex % 8) + Math.floor(squareIndex / 8)) % 2 === 1
-		square.className = `square ${isDarkSquare ? 'darkSquare' : 'lightSquare'}`
-		square.setAttribute('coordinate', this.index120ToCoordinate(index120))
-		square.setAttribute('index120', index120)
-
-		const pieceHtml = pieceCode ? this.createPieceHtml(pieceCode) : ''
-		square.innerHTML = pieceHtml
-		square.addEventListener('click', (event) => this.game.handleSquareClick(event))
-
-		this.boardArray120[index120] = pieceCode || ''
-		return square
-	}
-
-	// Generate HTML representation of the piece
-	createPieceHtml(pieceCode) {
-		if (!pieceCode) return ''
-		const pieceColour = pieceCode === pieceCode.toUpperCase() ? 'white' : 'black'
-		const pieceImgSrc = `/assets/chessPieces/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
-		return `<div class="piece ${pieceColour}" id="${pieceCode}"><img src="${pieceImgSrc}" alt=""></div>`
-	}
-
 	// Clear the board's HTML
 	clear() {
 		if (!this.boardElement) throw new Error('Board element not found')
@@ -144,16 +87,20 @@ class Chessboard {
 		const squares = Array.from(this.boardElement.children)
 		this.boardElement.innerHTML = ''
 		squares.reverse().forEach((square) => this.boardElement.appendChild(square))
-		this.orientation = this.orientation === 'white' ? 'black' : 'white'
 	}
 
-	// Set the board orientation
-	orient(side) {
-		if (!['white', 'black'].includes(side)) throw new Error('Invalid orientation')
-		if (side !== this.orientation) this.flip()
-	}
+	//!-------------- Piece and Move Operations --------------
 
-	//!-------------- Piece Manipulation Methods --------------
+	// Place a new piece on the board
+	place(pieceName, coordinate) {
+		const pieceHtml = this.createPieceHtml(pieceName)
+		if (!pieceHtml) throw new Error('Invalid piece name')
+
+		const squareIndex = this.coordinateToIndex120(coordinate)
+		this.boardArray120[squareIndex] = pieceName
+		this.getSquareFromIndex120(squareIndex).innerHTML = pieceHtml
+		this.playSound('move')
+	}
 
 	// Move a piece from one coordinate to another
 	move(fromCoord, toCoord) {
@@ -169,17 +116,17 @@ class Chessboard {
 
 		const existingPiece = toSquare.querySelector('.piece')
 		if (existingPiece) {
-			this.soundEffects.get('capture').play()
+			this.playSound('capture')
 			toSquare.removeChild(existingPiece)
 		} else {
-			this.soundEffects.get('move').play()
+			this.playSound('move')
 		}
 
 		toSquare.appendChild(pieceToMove)
 		this.boardArray120[toSquareIndex] = this.boardArray120[fromSquareIndex]
 		this.boardArray120[fromSquareIndex] = ''
 
-		this.updateEnPassantIndex(fromCoord, toCoord, this.boardArray120[toSquareIndex])
+		this.game.updateEnPassantIndex(fromCoord, toCoord, this.boardArray120[toSquareIndex])
 	}
 
 	// Perform castling move
@@ -202,7 +149,7 @@ class Chessboard {
 			this.getSquareFromIndex120(rookToIndex).appendChild(rookToMove)
 			this.boardArray120[rookToIndex] = this.boardArray120[rookFromIndex]
 			this.boardArray120[rookFromIndex] = ''
-			this.soundEffects.get('castle').play()
+			this.playSound('castle')
 		}
 	}
 
@@ -214,7 +161,7 @@ class Chessboard {
 		this.boardArray120[capturedPawnIndex] = ''
 		this.getSquareFromIndex120(capturedPawnIndex).innerHTML = ''
 		this.move(fromCoord, toCoord)
-		this.soundEffects.get('capture').play()
+		this.playSound('capture')
 	}
 
 	// Promote a pawn to a different piece
@@ -236,48 +183,11 @@ class Chessboard {
 
 		this.getSquareFromIndex120(squareIndex).innerHTML = pieceHtml
 		this.boardArray120[squareIndex] = newPiece
-		this.soundEffects.get('promote').play()
+		this.playSound('promote')
 		this.promotionInProgress = false
 	}
 
-	// Place a new piece on the board
-	place(pieceName, coordinate) {
-		const pieceHtml = this.createPieceHtml(pieceName)
-		if (!pieceHtml) throw new Error('Invalid piece name')
-
-		const squareIndex = this.coordinateToIndex120(coordinate)
-		this.boardArray120[squareIndex] = pieceName
-		this.getSquareFromIndex120(squareIndex).innerHTML = pieceHtml
-		this.soundEffects.get('move').play()
-	}
-
-	//!-------------- Highlight Methods --------------
-
-	// Highlight squares on the board
-	highlightSquares(moves) {
-		moves.forEach((move) => {
-			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
-			if (square) {
-				const highlightElement = this.isSquareOccupiedByOpponent(move, this.game.activePlayer) ? 'highlightRing' : 'highlightCircle'
-				const highlight = document.createElement('div')
-				highlight.className = highlightElement
-				square.appendChild(highlight)
-			}
-		})
-	}
-
-	// Unhighlight squares on the board
-	unhighlightSquares(moves) {
-		moves.forEach((move) => {
-			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
-			if (square) {
-				const highlight = square.querySelector('.highlightCircle, .highlightRing')
-				if (highlight) square.removeChild(highlight)
-			}
-		})
-	}
-
-	//!-------------- Coordinate Methods --------------
+	//!-------------- Coordinate Conversion and Utility --------------
 
 	// Convert coordinates to board index
 	coordinateToIndex120(coordinate) {
@@ -308,7 +218,63 @@ class Chessboard {
 		return this.boardArray120[this.coordinateToIndex120(coord)]
 	}
 
-	//!-------------- Helper Methods --------------
+	//!-------------- HTML and UI Management --------------
+
+	// Create a square element
+	createSquareHtml(pieceCode, index120, squareIndex) {
+		const square = document.createElement('div')
+		const isDarkSquare = ((squareIndex % 8) + Math.floor(squareIndex / 8)) % 2 === 1
+		square.className = `square ${isDarkSquare ? 'darkSquare' : 'lightSquare'}`
+		square.setAttribute('coordinate', this.index120ToCoordinate(index120))
+		square.setAttribute('index120', index120)
+
+		const pieceHtml = pieceCode ? this.createPieceHtml(pieceCode) : ''
+		square.innerHTML = pieceHtml
+
+		const highlightCircle = document.createElement('div')
+		highlightCircle.className = 'highlightCircle'
+		highlightCircle.style.display = 'none'
+		square.appendChild(highlightCircle)
+
+		const highlightRing = document.createElement('div')
+		highlightRing.className = 'highlightRing'
+		highlightRing.style.display = 'none'
+		square.appendChild(highlightRing)
+
+		square.addEventListener('click', (event) => this.game.handleSquareClick(event))
+		this.boardArray120[index120] = pieceCode || ''
+		return square
+	}
+
+	// Generate HTML representation of the piece
+	createPieceHtml(pieceCode) {
+		if (!pieceCode) return ''
+		const pieceColour = pieceCode === pieceCode.toUpperCase() ? 'white' : 'black'
+		const pieceImgSrc = `/assets/chessPieces/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
+		return `<div class="piece ${pieceColour}" id="${pieceCode}"><img src="${pieceImgSrc}" alt=""></div>`
+	}
+
+	// Highlight squares on the board
+	highlightSquares(moves) {
+		moves.forEach((move) => {
+			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
+			if (square) {
+				const highlightElement = this.isSquareOccupiedByOpponent(move, this.game.activePlayer) ? 'highlightRing' : 'highlightCircle'
+				square.querySelector(`.${highlightElement}`).style.display = 'block'
+			}
+		})
+	}
+
+	// Unhighlight squares on the board
+	unhighlightSquares(moves) {
+		moves.forEach((move) => {
+			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
+			if (square) {
+				square.querySelector('.highlightCircle').style.display = 'none'
+				square.querySelector('.highlightRing').style.display = 'none'
+			}
+		})
+	}
 
 	// Show the promotion options
 	showPromotionOptions(colour) {
@@ -330,36 +296,40 @@ class Chessboard {
 		this.promotionInProgress = false
 	}
 
-	// Find the index of the king for a given colour
-	findKingIndex(colour) {
-		for (let i = 0; i < 120; i++) {
-			const piece = this.boardArray120[i]
-			if (piece && piece === (colour === 'white' ? 'K' : 'k')) return i
-		}
-		throw new Error(`King of colour ${colour} not found on the board.`)
-	}
+	//!--------------  Game State and Validation --------------
 
-	// Update en passant index based on move
-	updateEnPassantIndex(fromCoord, toCoord, piece) {
-		this.enPassantIndex = null
-		if (piece && piece.toLowerCase() === 'p') {
-			const fromSquareIndex = this.coordinateToIndex120(fromCoord)
-			const toSquareIndex = this.coordinateToIndex120(toCoord)
-			if (Math.abs(toSquareIndex - fromSquareIndex) === 20) {
-				this.enPassantIndex = (fromSquareIndex + toSquareIndex) / 2
+	// Convert a FEN string to a 64-square board array
+	convertFENtoArray64(fen) {
+		if (!this.isValidFEN(fen)) throw new Error('Invalid FEN string')
+		const boardArray = new Array(64).fill('')
+		const fenParts = fen.split(' ')[0].split('/')
+
+		let i = 0
+		fenParts.forEach((rowFen) => {
+			for (const char of rowFen) {
+				if (/[1-8]/.test(char)) i += parseInt(char, 10)
+				else boardArray[i++] = char
 			}
-		}
+		})
+		return boardArray
 	}
 
-	// Determine the colour of a piece based on its name.
-	getPieceColour(pieceName) {
-		if (typeof pieceName !== 'string' || pieceName.length !== 1) throw new Error('Invalid piece name')
-		return pieceName === pieceName.toUpperCase() ? 'white' : 'black'
-	}
-
-	// Check if a square index is within the board's valid range
-	isValidBoardIndex(squareIndex) {
-		return squareIndex >= 21 && squareIndex <= 98 && squareIndex % 10 !== 0 && (squareIndex + 1) % 10 !== 0
+	// Check if a given FEN string is valid
+	isValidFEN(fen) {
+		if (!/^[prnbqkfweaPRNBQKFWEA1-8\/]+$/.test(fen)) return false
+		const ranks = fen.split(' ')[0].split('/')
+		return (
+			ranks.length === 8 &&
+			ranks.every((rank) => {
+				let squareCount = 0
+				for (const char of rank) {
+					if (/[1-8]/.test(char)) squareCount += parseInt(char, 10)
+					else if (/[prnbqkfweaPRNBQKFWEA]/.test(char)) squareCount++
+					else return false
+				}
+				return squareCount === 8
+			})
+		)
 	}
 
 	// Check if a square is occupied by an opponent's piece
@@ -368,7 +338,7 @@ class Chessboard {
 		return piece !== '' && this.getPieceColour(piece) !== colour
 	}
 
-	// Check if a square is occupied by an ally's piece
+	// Check if a square is occupied by an allies piece
 	isSquareOccupiedByAlly(squareIndex, colour) {
 		if (!this.isValidBoardIndex(squareIndex)) return false
 		const piece = this.boardArray120[squareIndex]
@@ -444,18 +414,34 @@ class Chessboard {
 		return false
 	}
 
-	// Method to test which squares are under attack
-	test(opponentColour) {
-		const attackedSquares = []
+	//!-------------- Helpers  --------------
 
-		for (let squareIndex = 21; squareIndex <= 98; squareIndex++) {
-			if (squareIndex % 10 === 0 || (squareIndex + 1) % 10 === 0) continue // Skip invalid squares
-
-			if (this.isSquareUnderAttack(squareIndex, opponentColour)) {
-				attackedSquares.push(this.getSquareFromIndex120(squareIndex))
-			}
+	// Plays a sound effect associated with a action
+	playSound(name) {
+		const sound = this.soundEffects.get(name)
+		if (sound) {
+			sound.currentTime = 0
+			sound.play()
 		}
+	}
 
-		return attackedSquares
+	// Find the index of the king for a given colour
+	findKingIndex(colour) {
+		for (let i = 0; i < 120; i++) {
+			const piece = this.boardArray120[i]
+			if (piece && piece === (colour === 'white' ? 'K' : 'k')) return i
+		}
+		throw new Error(`King of colour ${colour} not found on the board.`)
+	}
+
+	// Check if a square index is within the board's valid range
+	isValidBoardIndex(squareIndex) {
+		return squareIndex >= 21 && squareIndex <= 98 && squareIndex % 10 !== 0 && (squareIndex + 1) % 10 !== 0
+	}
+
+	// Determine the colour of a piece based on its name.
+	getPieceColour(pieceName) {
+		if (typeof pieceName !== 'string' || pieceName.length !== 1) throw new Error('Invalid piece name')
+		return pieceName === pieceName.toUpperCase() ? 'white' : 'black'
 	}
 }
