@@ -57,7 +57,7 @@ class Chessboard {
 		const soundFiles = ['move', 'capture', 'castle', 'check', 'promote']
 		this.soundEffects = new Map()
 		soundFiles.forEach((name) => {
-			const audio = new Audio(`/assets/sounds/${name}.mp3`)
+			const audio = new Audio(`assets/sounds/${name}.mp3`)
 			this.soundEffects.set(name, audio)
 		})
 	}
@@ -240,7 +240,7 @@ class Chessboard {
 	createPieceHtml(pieceCode) {
 		if (!pieceCode) return ''
 		const pieceColour = pieceCode === pieceCode.toUpperCase() ? 'white' : 'black'
-		const pieceImgSrc = `/assets/chessPieces/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
+		const pieceImgSrc = `assets/chessPieces/${pieceColour[0]}${pieceCode.toUpperCase()}.svg`
 		return `<div class="piece ${pieceColour}" id="${pieceCode}"><img src="${pieceImgSrc}" alt=""></div>`
 	}
 
@@ -288,7 +288,7 @@ class Chessboard {
 		if (!this.promotionOptions || !this.pieceOptions) return
 		this.pieceOptions.forEach((option) => {
 			const piece = option.getAttribute('data-piece')
-			const pieceImgSrc = `/assets/chessPieces/${colour[0]}${piece}.svg`
+			const pieceImgSrc = `assets/chessPieces/${colour[0]}${piece}.svg`
 			option.querySelector('img').src = pieceImgSrc
 			option.querySelector('img').alt = piece
 		})
