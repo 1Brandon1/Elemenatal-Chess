@@ -231,16 +231,6 @@ class Chessboard {
 		const pieceHtml = pieceCode ? this.createPieceHtml(pieceCode) : ''
 		square.innerHTML = pieceHtml
 
-		const highlightCircle = document.createElement('div')
-		highlightCircle.className = 'highlightCircle'
-		highlightCircle.style.display = 'none'
-		square.appendChild(highlightCircle)
-
-		const highlightRing = document.createElement('div')
-		highlightRing.className = 'highlightRing'
-		highlightRing.style.display = 'none'
-		square.appendChild(highlightRing)
-
 		square.addEventListener('click', (event) => this.game.handleSquareClick(event))
 		this.boardArray120[index120] = pieceCode || ''
 		return square
@@ -259,8 +249,23 @@ class Chessboard {
 		moves.forEach((move) => {
 			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
 			if (square) {
-				const highlightElement = this.isSquareOccupiedByOpponent(move, this.game.activePlayer) ? 'highlightRing' : 'highlightCircle'
-				square.querySelector(`.${highlightElement}`).style.display = 'block'
+				let highlightElement
+				if (this.isSquareOccupiedByOpponent(move, this.game.activePlayer)) {
+					highlightElement = square.querySelector('.highlightRing')
+					if (!highlightElement) {
+						highlightElement = document.createElement('div')
+						highlightElement.className = 'highlightRing'
+						square.appendChild(highlightElement)
+					}
+				} else {
+					highlightElement = square.querySelector('.highlightCircle')
+					if (!highlightElement) {
+						highlightElement = document.createElement('div')
+						highlightElement.className = 'highlightCircle'
+						square.appendChild(highlightElement)
+					}
+				}
+				highlightElement.style.display = 'block'
 			}
 		})
 	}
@@ -270,8 +275,10 @@ class Chessboard {
 		moves.forEach((move) => {
 			const square = this.boardElement.querySelector(`.square[index120="${move}"]`)
 			if (square) {
-				square.querySelector('.highlightCircle').style.display = 'none'
-				square.querySelector('.highlightRing').style.display = 'none'
+				const highlightCircle = square.querySelector('.highlightCircle')
+				const highlightRing = square.querySelector('.highlightRing')
+				if (highlightCircle) highlightCircle.style.display = 'none'
+				if (highlightRing) highlightRing.style.display = 'none'
 			}
 		})
 	}

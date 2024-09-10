@@ -32,6 +32,9 @@ class Game {
 			airLimit: 1
 		}
 
+		this.frozenPiece = null
+		this.fortifedPiece = null
+
 		this.board.draw(this.startPosition)
 		this.enPassantIndex = null
 	}
@@ -301,6 +304,19 @@ class Game {
 		return this.calculateMoves(currentPosition, colour, bishopMoves.concat(specialMoves), false)
 	}
 
+	// Get all possible moves of the specified colour
+	calculateAllMoves(colour) {
+		const allMoves = []
+		for (let i = 21; i <= 98; i++) {
+			if (this.board.isSquareOccupiedByAlly(i, colour)) {
+				const fromcoord = this.board.index120ToCoordinate(i)
+				const piece = this.board.getPieceFromCoordinate(fromcoord)
+				allMoves.push(...this.calculateValidMoves(piece, i).map((move) => [fromcoord, this.board.index120ToCoordinate(move)]))
+			}
+		}
+		return allMoves
+	}
+
 	//  Checks if a move leaves the king safe
 	doesMoveLeaveKingSafe(from, to) {
 		const tempBoard = [...this.board.boardArray120]
@@ -316,6 +332,94 @@ class Game {
 		const kingIndex = tempBoardInstance.findKingIndex(kingColour)
 
 		return !tempBoardInstance.isSquareUnderAttack(kingIndex, this.getOpponentColour(kingColour))
+	}
+
+	//!-------------- Special Abilities --------------
+
+	// prettier-ignore
+	// Uses a special ability
+	useSpecialAbility(piece, coord) {
+        switch (piece.toLowerCase()) {
+            case 'f': this.useFireAbility(coord); break
+            case 'w': this.useWaterAbility(coord); break
+            case 'e': this.useEarthAbility(coord); break
+            case 'a': this.useAirAbility(coord); break
+        }
+    }
+
+	// Uses the Fire Mage’s ability
+	useFireAbility(coord) {
+		const moves = this.calculateMoves(currentPosition, colour, [-11, -10, -9, -1, 1, 9, 10, 11], false)
+	}
+
+	// Uses the Water Mage’s ability
+	useWaterAbility(coord) {}
+
+	// Uses the Earth Golem’s ability
+	useEarthAbility(coord) {}
+
+	// Uses the Air Spirit’s ability
+	useAirAbility(coord) {}
+
+	freezePiece(coord) {}
+
+	fortifyPiece(coord) {}
+
+	//!-------------- Castling and En Passant --------------
+
+	// Update castling rights based on the move
+	updateCastlingRights(fromCoord, piece) {
+		const colour = this.board.getPieceColour(piece)
+
+		if (piece.toLowerCase() === 'k') {
+			this.castlingRights[colour].kingside = false
+			this.castlingRights[colour].queenside = false
+		} else if (piece.toLowerCase() === 'r') {
+			if (fromCoord === 'a1' || fromCoord === 'a8') this.castlingRights[colour].queenside = false
+			if (fromCoord === 'h1' || fromCoord === 'h8') this.castlingRights[colour].kingside = false
+		}
+	}
+
+	// Check if kingside castling is possible
+	canKingCastleKingside(colour) {
+		const emptySquares = colour === 'white' ? [96, 97] : [26, 27]
+		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(colour === 'white' ? 98 : 28))
+
+		return (
+			this.castlingRights[colour].kingside &&
+			this.board.areSquaresEmpty(emptySquares) &&
+			!this.areSquaresUnderAttack(emptySquares, colour) &&
+			rookPiece &&
+			rookPiece.toLowerCase() === 'r' &&
+			this.board.getPieceColour(rookPiece) === colour
+		)
+	}
+
+	// Check if queenside castling is possible
+	canKingCastleQueenside(colour) {
+		const emptySquares = colour === 'white' ? [94, 93, 92] : [24, 23, 22]
+		const rookPiece = this.board.getPieceFromCoordinate(this.board.index120ToCoordinate(colour === 'white' ? 91 : 21))
+
+		return (
+			this.castlingRights[colour].queenside &&
+			this.board.areSquaresEmpty(emptySquares) &&
+			!this.areSquaresUnderAttack(emptySquares, colour) &&
+			rookPiece &&
+			rookPiece.toLowerCase() === 'r' &&
+			this.board.getPieceColour(rookPiece) === colour
+		)
+	}
+
+	// Update en passant index based on move
+	updateEnPassantIndex(fromCoord, toCoord, piece) {
+		this.enPassantIndex = null
+		if (piece && piece.toLowerCase() === 'p') {
+			const fromSquareIndex = this.board.coordinateToIndex120(fromCoord)
+			const toSquareIndex = this.board.coordinateToIndex120(toCoord)
+			if (Math.abs(toSquareIndex - fromSquareIndex) === 20) {
+				this.enPassantIndex = (fromSquareIndex + toSquareIndex) / 2
+			}
+		}
 	}
 
 	//!-------------- Game Status and Utility --------------
