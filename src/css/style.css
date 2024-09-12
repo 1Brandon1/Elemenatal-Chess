@@ -22,10 +22,16 @@ body {
 main {
 	height: 100vh;
 	margin-left: 5rem;
+	display: grid;
+}
+
+.game-container {
 	display: flex;
-	flex-direction: column;
-	justify-content: space-around;
+	gap: 1rem;
 	align-items: center;
+	justify-content: space-around;
+	flex-direction: column;
+	margin-bottom: 5rem;
 }
 
 /* !---------- Theme Styles ---------- */
@@ -102,8 +108,8 @@ main {
 /* Small screens */
 @media only screen and (max-width: 790px) {
 	main {
-		flex-direction: column;
+		/* flex-direction: column; */
 		margin-left: 0;
-		margin-bottom: 5rem;
+		/* margin-bottom: 5rem; */
 	}
 }

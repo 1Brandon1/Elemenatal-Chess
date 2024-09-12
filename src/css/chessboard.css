@@ -92,7 +92,6 @@
 /* Small screens */
 @media only screen and (max-width: 790px) {
 	.chessboard {
-		position: fixed;
 		display: grid;
 		grid-template-columns: repeat(8, 12vw);
 		grid-template-rows: repeat(8, 12vw);
